@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajuda - MDT Generator</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 20px auto; padding: 20px; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; }
+        h2 { color: #2980b9; margin-top: 30px; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
+        ul { padding-left: 20px; }
+        .warning { background: #fff3cd; border-left: 5px solid #ffecb5; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Manual do MDT Generator</h1>
+    <p>O MDT Generator é uma ferramenta técnica para transformar curvas de nível em superfícies contínuas (rasters).</p>
+
+    <h2>1. Preparação dos Dados</h2>
+    <p>Certifique-se de que sua camada de curvas de nível:</p>
+    <ul>
+        <li>Está em um Sistema de Coordenadas Projetadas (ex: UTM / SIRGAS 2000), não em coordenadas geográficas (Graus).</li>
+        <li>Possui um campo de atributo numérico com a elevação (cota).</li>
+    </ul>
+
+    <h2>2. Parâmetros</h2>
+    <ul>
+        <li><strong>Layer Select:</strong> Camada vetorial de origem.</li>
+        <li><strong>Z/Elevation Field:</strong> O campo que será usado como a altura para cada linha.</li>
+        <li><strong>Resolution:</strong> O tamanho do pixel no mapa. Recomenda-se usar o dobro da equidistância das curvas (ex: curvas de 1m -> resolução 2m) para um equilíbrio entre performance e detalhe.</li>
+    </ul>
+
+    <h2>3. O Algoritmo</h2>
+    <p>O plugin utiliza uma técnica de <strong>Interpolação Linear (TIN)</strong>. As curvas são densificadas com pontos a cada 1 metro para evitar que o modelo perca precisão em áreas de alta curvatura.</p>
+
+    <div class="warning">
+        <strong>Dica Geográfica:</strong> O plugin alinha o "canto" do raster a múltiplos arredondados da resolução. Isso garante que, se você gerar dois rasters com a mesma resolução em projetos diferentes, os pixels estarão perfeitamente sobrepostos.
+    </div>
+
+    <h2>4. Resolução de Problemas</h2>
+    <p>Se o processo falhar:</p>
+    <ol>
+        <li>Verifique se o disco tem espaço suficiente (rasters de 0.1m podem ocupar centenas de megabytes).</li>
+        <li>Certifique-se de que não há letras especiais ou espaços excessivos no nome do arquivo de saída.</li>
+        <li>Confira o painel de log em <code>Mensagens Log > MDT Plugin</code> no QGIS.</li>
+    </ol>
+</body>
+</html>

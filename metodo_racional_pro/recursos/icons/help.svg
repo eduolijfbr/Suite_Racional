@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Ícone Ajuda: Ponto de interrogação em círculo -->
+  <defs>
+    <linearGradient id="help" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#9C27B0"/>
+      <stop offset="100%" style="stop-color:#6A1B9A"/>
+    </linearGradient>
+  </defs>
+  <!-- Círculo de fundo -->
+  <circle cx="12" cy="12" r="10" fill="url(#help)"/>
+  <!-- Círculo interno -->
+  <circle cx="12" cy="12" r="8" fill="none" stroke="#E1BEE7" stroke-width="1"/>
+  <!-- Ponto de interrogação -->
+  <path d="M12 6c-2 0-3.5 1.5-3.5 3.5h2c0-0.83 0.67-1.5 1.5-1.5s1.5 0.67 1.5 1.5c0 1.5-2 1.31-2 4h2c0-1.81 2-2 2-4 0-2-1.5-3.5-3.5-3.5z" fill="white"/>
+  <!-- Ponto -->
+  <circle cx="12" cy="17" r="1.5" fill="white"/>
+</svg>

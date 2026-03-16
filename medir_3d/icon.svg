@@ -1,0 +1,38 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="top" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ea8de" />
+      <stop offset="100%" stop-color="#5390d9" />
+    </linearGradient>
+    <linearGradient id="left" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5e60ce" />
+      <stop offset="100%" stop-color="#6930c3" />
+    </linearGradient>
+    <linearGradient id="right" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7400b8" />
+      <stop offset="100%" stop-color="#560bad" />
+    </linearGradient>
+  </defs>
+
+  <!-- Group centered, representing a 3D isometric cube -->
+  <g transform="translate(128, 140)">
+    <!-- Top Face -->
+    <path d="M 0,-75 L 75,-37.5 L 0,0 L -75,-37.5 Z" fill="url(#top)" stroke="#000000" stroke-width="4" stroke-linejoin="round"/>
+    <!-- Left Face -->
+    <path d="M -75,-37.5 L 0,0 L 0,75 L -75,37.5 Z" fill="url(#left)" stroke="#000000" stroke-width="4" stroke-linejoin="round"/>
+    <!-- Right Face -->
+    <path d="M 0,0 L 75,-37.5 L 75,37.5 L 0,75 Z" fill="url(#right)" stroke="#000000" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Measuring Nodes and Lines -->
+  <!-- Left to Bottom -->
+  <path d="M 45,102.5 L 128,220" stroke="#f72585" stroke-width="6" stroke-dasharray="10 6" fill="none" stroke-linecap="round"/>
+  <circle cx="45" cy="102.5" r="8" fill="#f72585" />
+  <circle cx="128" cy="220" r="8" fill="#f72585" />
+
+  <!-- Bottom to Right -->
+  <path d="M 128,220 L 211,102.5" stroke="#f72585" stroke-width="6" stroke-dasharray="10 6" fill="none" stroke-linecap="round"/>
+  <circle cx="211" cy="102.5" r="8" fill="#f72585" />
+
+  <text x="128" y="45" font-family="Arial, sans-serif" font-size="34" font-weight="bold" fill="#2b2d42" text-anchor="middle">MEDIR 3D</text>
+</svg>

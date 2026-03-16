@@ -1,0 +1,147 @@
+{
+  "descricao": "Tabela de Curve Number (CN) para diferentes usos do solo e grupos hidrológicos",
+  "grupos_hidrologicos": {
+    "A": "Solos com alta taxa de infiltração (arenosos profundos)",
+    "B": "Solos com moderada taxa de infiltração",
+    "C": "Solos com baixa taxa de infiltração",
+    "D": "Solos com muito baixa taxa de infiltração (argilosos)"
+  },
+  "usos_solo": [
+    {
+      "tipo": "area_urbana_impermeavel",
+      "descricao": "Telhados, pavimentos asfálticos, concreto",
+      "CN_A": 98,
+      "CN_B": 98,
+      "CN_C": 98,
+      "CN_D": 98
+    },
+    {
+      "tipo": "area_urbana_residencial_alta",
+      "descricao": "Lotes < 500m², alta densidade",
+      "CN_A": 77,
+      "CN_B": 85,
+      "CN_C": 90,
+      "CN_D": 92
+    },
+    {
+      "tipo": "area_urbana_residencial_media",
+      "descricao": "Lotes 500-1000m², média densidade",
+      "CN_A": 61,
+      "CN_B": 75,
+      "CN_C": 83,
+      "CN_D": 87
+    },
+    {
+      "tipo": "area_urbana_residencial_baixa",
+      "descricao": "Lotes > 1000m², baixa densidade",
+      "CN_A": 54,
+      "CN_B": 70,
+      "CN_C": 80,
+      "CN_D": 85
+    },
+    {
+      "tipo": "area_comercial",
+      "descricao": "Áreas comerciais e de negócios",
+      "CN_A": 89,
+      "CN_B": 92,
+      "CN_C": 94,
+      "CN_D": 95
+    },
+    {
+      "tipo": "area_industrial",
+      "descricao": "Áreas industriais",
+      "CN_A": 81,
+      "CN_B": 88,
+      "CN_C": 91,
+      "CN_D": 93
+    },
+    {
+      "tipo": "espacos_abertos_bom",
+      "descricao": "Parques, gramados em boas condições (>75% cobertura)",
+      "CN_A": 39,
+      "CN_B": 61,
+      "CN_C": 74,
+      "CN_D": 80
+    },
+    {
+      "tipo": "espacos_abertos_regular",
+      "descricao": "Gramados em condições regulares (50-75% cobertura)",
+      "CN_A": 49,
+      "CN_B": 69,
+      "CN_C": 79,
+      "CN_D": 84
+    },
+    {
+      "tipo": "floresta_densa",
+      "descricao": "Floresta densa, mata nativa preservada",
+      "CN_A": 30,
+      "CN_B": 55,
+      "CN_C": 70,
+      "CN_D": 77
+    },
+    {
+      "tipo": "floresta_rala",
+      "descricao": "Floresta rala, vegetação secundária",
+      "CN_A": 45,
+      "CN_B": 66,
+      "CN_C": 77,
+      "CN_D": 83
+    },
+    {
+      "tipo": "pastagem_boa",
+      "descricao": "Pastagem em boas condições",
+      "CN_A": 39,
+      "CN_B": 61,
+      "CN_C": 74,
+      "CN_D": 80
+    },
+    {
+      "tipo": "pastagem_regular",
+      "descricao": "Pastagem em condições regulares",
+      "CN_A": 49,
+      "CN_B": 69,
+      "CN_C": 79,
+      "CN_D": 84
+    },
+    {
+      "tipo": "pastagem_ruim",
+      "descricao": "Pastagem degradada",
+      "CN_A": 68,
+      "CN_B": 79,
+      "CN_C": 86,
+      "CN_D": 89
+    },
+    {
+      "tipo": "agricultura_curvas_nivel",
+      "descricao": "Culturas em curvas de nível",
+      "CN_A": 62,
+      "CN_B": 71,
+      "CN_C": 78,
+      "CN_D": 81
+    },
+    {
+      "tipo": "agricultura_linha_reta",
+      "descricao": "Culturas em linha reta",
+      "CN_A": 67,
+      "CN_B": 78,
+      "CN_C": 85,
+      "CN_D": 89
+    },
+    {
+      "tipo": "solo_exposto",
+      "descricao": "Solo sem cobertura vegetal",
+      "CN_A": 77,
+      "CN_B": 86,
+      "CN_C": 91,
+      "CN_D": 94
+    },
+    {
+      "tipo": "corpos_agua",
+      "descricao": "Rios, lagos, represas",
+      "CN_A": 100,
+      "CN_B": 100,
+      "CN_C": 100,
+      "CN_D": 100
+    }
+  ]
+}

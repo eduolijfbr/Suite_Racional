@@ -1,0 +1,13 @@
+[general]
+name=Medir 3D
+icon=icon.svg
+qgisMinimumVersion=3.0
+description=Ferramenta para medição de distâncias, áreas e volumes em 3D sobre modelos digitais de elevação (MDT/MDS).
+version=0.1
+author=Eduardo
+email=eduardo@example.com
+about=Medir distâncias, áreas e volumes 3D.
+tracker=
+repository=
+category=Raster
+tags=3d, measure, raster, dem

@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual do Usuário - Método Racional Pro</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 3px solid #1565C0;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            color: #1565C0;
+            font-size: 32px;
+            margin: 0;
+        }
+
+        header p {
+            color: #666;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #1565C0;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        nav {
+            background: #E3F2FD;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        nav h3 {
+            margin-top: 0;
+            color: #1565C0;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            columns: 2;
+        }
+
+        nav li {
+            margin: 8px 0;
+        }
+
+        nav a {
+            color: #1976D2;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        h2 {
+            color: #1565C0;
+            border-bottom: 2px solid #E3F2FD;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        h3 {
+            color: #1976D2;
+            margin-top: 25px;
+        }
+
+        .info-box {
+            background: #E3F2FD;
+            border-left: 4px solid #1565C0;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box {
+            background: #FFF3E0;
+            border-left: 4px solid #FF9800;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .success-box {
+            background: #E8F5E9;
+            border-left: 4px solid #4CAF50;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .tip-box {
+            background: #F3E5F5;
+            border-left: 4px solid #9C27B0;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #1565C0;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #c7254e;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+
+        .step-number {
+            background: #1565C0;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content h4 {
+            margin: 0 0 10px 0;
+            color: #1565C0;
+        }
+
+        .formula {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            background: #E3F2FD;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .formula-desc {
+            font-size: 14px;
+            font-weight: normal;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .param-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .param-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .param-card h4 {
+            margin: 0 0 5px 0;
+            color: #1565C0;
+            font-size: 14px;
+        }
+
+        .param-card p {
+            margin: 0;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .screenshot {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            color: #999;
+            font-style: italic;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #ddd;
+            color: #999;
+        }
+
+        .keyboard {
+            display: inline-block;
+            background: #f4f4f4;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            box-shadow: 0 2px 0 #999;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📐 Método Racional Pro</h1>
+            <p>Plugin QGIS para Cálculo de Drenagem Urbana</p>
+            <span class="badge">Versão 1.1.0</span>
+        </header>
+
+        <nav>
+            <h3>📚 Índice</h3>
+            <ul>
+                <li><a href="#introducao">1. Introdução</a></li>
+                <li><a href="#instalacao">2. Instalação</a></li>
+                <li><a href="#interface">3. Interface do Plugin</a></li>
+                <li><a href="#camadas">4. Camadas do Projeto</a></li>
+                <li><a href="#dados">5. Dados de Entrada</a></li>
+                <li><a href="#calculo">6. Realizando Cálculos</a></li>
+                <li><a href="#idf">7. Curvas IDF</a></li>
+                <li><a href="#resultados">8. Resultados e Verificações</a></li>
+                <li><a href="#relatorios">9. Relatórios e Exportação</a></li>
+                <li><a href="#formulas">10. Fórmulas Utilizadas</a></li>
+                <li><a href="#referencias">11. Referências Técnicas</a></li>
+                <li><a href="#suporte">12. Suporte</a></li>
+            </ul>
+        </nav>
+
+        <!-- INTRODUÇÃO -->
+        <section id="introducao">
+            <h2>1. Introdução</h2>
+
+            <p>O <strong>Método Racional Pro</strong> é um plugin para QGIS que automatiza o cálculo de drenagem urbana
+                utilizando o Método Racional. Desenvolvido para engenheiros, projetistas e estudantes, o plugin oferece:
+            </p>
+
+            <ul>
+                <li>✅ Extração automática de parâmetros do MDT (Modelo Digital de Terreno)</li>
+                <li>✅ Cálculo de vazão pelo Método Racional</li>
+                <li>✅ Dimensionamento de condutos pela equação de Manning</li>
+                <li>✅ Curvas IDF de diversas cidades brasileiras</li>
+                <li>✅ Verificações técnicas automáticas</li>
+                <li>✅ Geração de relatórios profissionais</li>
+                <li>✅ Exportação em múltiplos formatos</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>💡 O que é o Método Racional?</strong><br>
+                O Método Racional é uma metodologia amplamente utilizada para estimar a vazão de pico em pequenas bacias
+                hidrográficas urbanas. É recomendado para áreas de até 2 km² e considera a intensidade da chuva, a área
+                da bacia e o coeficiente de escoamento superficial.
+            </div>
+        </section>
+
+        <!-- INSTALAÇÃO -->
+        <section id="instalacao">
+            <h2>2. Instalação</h2>
+
+            <h3>2.1 Requisitos</h3>
+            <ul>
+                <li>QGIS versão 3.4 ou superior</li>
+                <li>Sistema operacional: Windows, Linux ou macOS</li>
+            </ul>
+
+            <h3>2.2 Passos para Instalação</h3>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Localizar a pasta de plugins</h4>
+                    <p>No QGIS, vá em <code>Configurações → Perfis de Usuário → Abrir Pasta do Perfil Ativo</code>,
+                        depois navegue até <code>python/plugins/</code></p>
+                    <p><strong>Windows:</strong> <code>%APPDATA%\QGIS\QGIS3\profiles\default\python\plugins\</code></p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Copiar o plugin</h4>
+                    <p>Copie a pasta <code>metodo_racional_pro</code> inteira para a pasta de plugins.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Reiniciar o QGIS</h4>
+                    <p>Feche completamente o QGIS e abra novamente.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h4>Ativar o plugin</h4>
+                    <p>Vá em <code>Complementos → Gerenciar e Instalar Complementos</code>, procure por "Método Racional
+                        Pro" e marque a caixa para ativar.</p>
+                </div>
+            </div>
+
+            <div class="success-box">
+                <strong>✅ Pronto!</strong> O plugin estará disponível em <code>Complementos → Método Racional Pro</code>
+            </div>
+        </section>
+
+        <!-- INTERFACE -->
+        <section id="interface">
+            <h2>3. Interface do Plugin</h2>
+
+            <h3>3.1 Acessando o Plugin</h3>
+            <p>Após a instalação, acesse o plugin por:</p>
+            <ul>
+                <li><strong>Menu:</strong>
+                    <code>Complementos → Método Racional Pro → Método Racional - Cálculo de Drenagem</code>
+                </li>
+                <li><strong>Barra de ferramentas:</strong> Clique no ícone na barra "MetodoRacionalPro"</li>
+            </ul>
+
+            <h3>3.2 Visão Geral da Interface</h3>
+            <p>A interface é dividida em duas áreas principais:</p>
+
+            <table>
+                <tr>
+                    <th>Área</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td><strong>Painel Esquerdo</strong></td>
+                    <td>Camadas do projeto, dados de entrada e precipitação. No topo, o botão <b>📘 GUIA TÉCNICO</b>
+                        oferece acesso rápido às limitações normativas.</td>
+                </tr>
+                <tr>
+                    <td><strong>Painel Direito</strong></td>
+                    <td>Resultados, verificações técnicas e opções de exportação.</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- CAMADAS -->
+        <section id="camadas">
+            <h2>4. Camadas do Projeto</h2>
+
+            <p>O plugin utiliza camadas carregadas no projeto QGIS para extrair automaticamente os parâmetros da bacia.
+            </p>
+
+            <h3>4.1 Tipos de Camadas</h3>
+
+            <table>
+                <tr>
+                    <th>Camada</th>
+                    <th>Tipo</th>
+                    <th>Uso</th>
+                </tr>
+                <tr>
+                    <td><strong>MDT</strong></td>
+                    <td>Raster</td>
+                    <td>Cálculo de desnível (altitude máx - mín)</td>
+                </tr>
+                <tr>
+                    <td><strong>Área de Estudo</strong></td>
+                    <td>Polígono</td>
+                    <td>Delimitação da bacia - cálculo de área</td>
+                </tr>
+                <tr>
+                    <td><strong>Uso do Solo</strong></td>
+                    <td>Polígono</td>
+                    <td>Cálculo do coeficiente de impermeabilidade</td>
+                </tr>
+                <tr>
+                    <td><strong>Curvas de Nível</strong></td>
+                    <td>Linha</td>
+                    <td>Alternativa ao MDT para desnível</td>
+                </tr>
+                <tr>
+                    <td><strong>Cursos d'água</strong></td>
+                    <td>Linha</td>
+                    <td>Cálculo da distância do talvegue</td>
+                </tr>
+            </table>
+
+            <div class="tip-box">
+                <strong>💡 Dica:</strong> Selecione feições específicas no mapa antes de clicar em "EXTRAIR PARÂMETROS".
+                Se nenhuma feição estiver selecionada, o plugin usará todas as feições da camada.
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Nota de Limitação Técnica:</strong> O Método Racional é estritamente recomendado para bacias
+                de microdrenagem e áreas urbanas pequenas (geralmente < 50-100 hectares). Para bacias de macrodrenagem,
+                    os resultados devem ser validados via Hidrograma Unitário (SCS) ou SWMM. </div>
+
+                    <h3>4.2 Extração Automática</h3>
+                    <p>Clique no botão <strong>"🔄 EXTRAIR PARÂMETROS"</strong> para calcular automaticamente:</p>
+                    <ul>
+                        <li><strong>Área:</strong> Calculada a partir do polígono selecionado</li>
+                        <li><strong>Desnível:</strong> Diferença entre altitude máxima e mínima do MDT na área</li>
+                        <li><strong>Distância:</strong> Comprimento do curso d'água ou maior reta inscrita no polígono
+                        </li>
+                        <li><strong>Impermeabilidade:</strong> Coeficiente ponderado pelo uso do solo</li>
+                        <li><strong>Tempo:</strong> Calculado pelo método de Kirpich</li>
+                    </ul>
+        </section>
+
+        <!-- DADOS -->
+        <section id="dados">
+            <h2>5. Dados de Entrada</h2>
+
+            <h3>5.1 Parâmetros</h3>
+
+            <div class="param-grid">
+                <div class="param-card">
+                    <h4>DISTÂNCIA (m)</h4>
+                    <p>Comprimento do talvegue principal da bacia</p>
+                </div>
+                <div class="param-card">
+                    <h4>DESNÍVEL (m)</h4>
+                    <p>Diferença de altitude entre montante e jusante</p>
+                </div>
+                <div class="param-card">
+                    <h4>TEMPO (min)</h4>
+                    <p>Tempo de concentração da bacia</p>
+                </div>
+                <div class="param-card">
+                    <h4>IMPERMEABILIDADE</h4>
+                    <p>Coeficiente de escoamento (0 a 1)</p>
+                </div>
+                <div class="param-card">
+                    <h4>ÁREA (km²)</h4>
+                    <p>Área total da bacia hidrográfica</p>
+                </div>
+                <div class="param-card">
+                    <h4>RUGOSIDADE</h4>
+                    <p>Coeficiente de Manning do conduto</p>
+                </div>
+                <div class="param-card">
+                    <h4>DECLIVIDADE (%)</h4>
+                    <p>Declividade longitudinal do conduto</p>
+                </div>
+            </div>
+
+            <h3>5.2 Coeficientes de Rugosidade (Manning)</h3>
+
+            <table>
+                <tr>
+                    <th>Material</th>
+                    <th>n (típico)</th>
+                    <th>Faixa</th>
+                </tr>
+                <tr>
+                    <td>PEAD</td>
+                    <td>0.010</td>
+                    <td>0.009 - 0.012</td>
+                </tr>
+                <tr>
+                    <td>PVC</td>
+                    <td>0.010</td>
+                    <td>0.009 - 0.011</td>
+                </tr>
+                <tr>
+                    <td>Concreto</td>
+                    <td>0.013</td>
+                    <td>0.012 - 0.015</td>
+                </tr>
+                <tr>
+                    <td>Galeria Celular</td>
+                    <td>0.015</td>
+                    <td>0.013 - 0.017</td>
+                </tr>
+            </table>
+
+            <h3>5.3 Coeficientes de Escoamento (C)</h3>
+
+            <table>
+                <tr>
+                    <th>Tipo de Superfície</th>
+                    <th>C (típico)</th>
+                </tr>
+                <tr>
+                    <td>Área urbana impermeável (asfalto, concreto)</td>
+                    <td>0.90 - 0.95</td>
+                </tr>
+                <tr>
+                    <td>Área comercial/industrial</td>
+                    <td>0.80 - 0.90</td>
+                </tr>
+                <tr>
+                    <td>Área residencial alta densidade</td>
+                    <td>0.60 - 0.75</td>
+                </tr>
+                <tr>
+                    <td>Área residencial baixa densidade</td>
+                    <td>0.40 - 0.55</td>
+                </tr>
+                <tr>
+                    <td>Parques e jardins</td>
+                    <td>0.15 - 0.25</td>
+                </tr>
+                <tr>
+                    <td>Floresta/mata</td>
+                    <td>0.10 - 0.20</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- CÁLCULO -->
+        <section id="calculo">
+            <h2>6. Realizando Cálculos</h2>
+
+            <h3>6.1 Passo a Passo</h3>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Carregar camadas no QGIS</h4>
+                    <p>Carregue o MDT, polígono da área de estudo e opcionalmente uso do solo e cursos d'água.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Selecionar a área de interesse</h4>
+                    <p>No mapa, selecione o polígono da bacia que deseja calcular (opcional).</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Abrir o plugin</h4>
+                    <p>Vá em <code>Complementos → Método Racional Pro → Método Racional - Cálculo de Drenagem</code></p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h4>Selecionar as camadas</h4>
+                    <p>Nos combos de "Camadas do Projeto", selecione as camadas correspondentes.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h4>Extrair parâmetros</h4>
+                    <p>Clique em <strong>"🔄 EXTRAIR PARÂMETROS"</strong> para calcular automaticamente os dados.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">6</div>
+                <div class="step-content">
+                    <h4>Ajustar valores</h4>
+                    <p>Verifique e ajuste os valores de rugosidade, declividade e outros conforme necessário.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">7</div>
+                <div class="step-content">
+                    <h4>Calcular intensidade</h4>
+                    <p>Clique em <strong>"📊 Calcular IDF"</strong> para obter a intensidade de precipitação.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">8</div>
+                <div class="step-content">
+                    <h4>Dimensionamento e Verificação</h4>
+                    <p>Clique em <strong>"CALCULAR"</strong>. Verifique o Número de Froude e a Velocidade para garantir
+                        a estabilidade do conduto conforme o Guia Técnico.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- IDF -->
+        <section id="idf">
+            <h2>7. Curvas IDF</h2>
+
+            <p>As curvas IDF (Intensidade-Duração-Frequência) relacionam a intensidade da chuva com sua duração e tempo
+                de retorno.</p>
+
+            <h3>7.1 Equação IDF</h3>
+
+            <div class="formula">
+                I = (K × TR<sup>a</sup>) / (t + b)<sup>c</sup>
+                <div class="formula-desc">
+                    I = Intensidade (mm/h) | TR = Tempo de retorno (anos) | t = Duração (min)
+                </div>
+            </div>
+
+            <h3>7.2 Cidades Disponíveis</h3>
+            <p>O plugin inclui curvas IDF para as seguintes cidades brasileiras:</p>
+
+            <div class="param-grid">
+                <div class="param-card">
+                    <h4>Juiz de Fora - MG</h4>
+                </div>
+                <div class="param-card">
+                    <h4>Belo Horizonte - MG</h4>
+                </div>
+                <div class="param-card">
+                    <h4>São Paulo - SP</h4>
+                </div>
+                <div class="param-card">
+                    <h4>Rio de Janeiro - RJ</h4>
+                </div>
+                <div class="param-card">
+                    <h4>Curitiba - PR</h4>
+                </div>
+                <div class="param-card">
+                    <h4>Porto Alegre - RS</h4>
+                </div>
+                <div class="param-card">
+                    <h4>Brasília - DF</h4>
+                </div>
+                <div class="param-card">
+                    <h4>Salvador - BA</h4>
+                </div>
+                <div class="param-card">
+                    <h4>Fortaleza - CE</h4>
+                </div>
+                <div class="param-card">
+                    <h4>Recife - PE</h4>
+                </div>
+            </div>
+
+            <h3>7.3 Curvas Personalizadas</h3>
+            <p>Você pode adicionar curvas IDF personalizadas:</p>
+            <ol>
+                <li>Clique em <strong>"📊 Calcular IDF"</strong></li>
+                <li>Clique em <strong>"➕ Nova"</strong></li>
+                <li>Informe o nome da localidade</li>
+                <li>Marque <strong>"Habilitar edição dos parâmetros"</strong></li>
+                <li>Preencha os valores de K, a, b, c</li>
+                <li>Clique em <strong>"💾 Salvar Parâmetros"</strong></li>
+            </ol>
+
+            <div class="info-box">
+                <strong>💾 Persistência:</strong> As curvas personalizadas são salvas automaticamente e estarão
+                disponíveis nas próximas sessões.
+            </div>
+        </section>
+
+        <!-- RESULTADOS -->
+        <section id="resultados">
+            <h2>8. Resultados e Verificações</h2>
+
+            <h3>8.1 Resultados do Cálculo</h3>
+
+            <table>
+                <tr>
+                    <th>Resultado</th>
+                    <th>Descrição</th>
+                    <th>Unidade</th>
+                </tr>
+                <tr>
+                    <td><strong>Vazão</strong></td>
+                    <td>Vazão de projeto calculada pelo Método Racional</td>
+                    <td>m³/s</td>
+                </tr>
+                <tr>
+                    <td><strong>Diâmetro</strong></td>
+                    <td>Diâmetro calculado pela equação de Manning</td>
+                    <td>m</td>
+                </tr>
+                <tr>
+                    <td><strong>Galeria</strong></td>
+                    <td>Diâmetro comercial recomendado</td>
+                    <td>m</td>
+                </tr>
+                <tr>
+                    <td><strong>Velocidade</strong></td>
+                    <td>Velocidade de escoamento no conduto</td>
+                    <td>m/s</td>
+                </tr>
+            </table>
+
+            <h3>8.2 Verificações Técnicas</h3>
+
+            <div class="success-box">
+                <strong>✓ Velocidade Adequada</strong><br>
+                Limites: 0,6 m/s (mínimo para autolimpeza) a 5,0 m/s (máximo para evitar erosão)
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Escoamento e Regime (Froude)</strong><br>
+                <ul>
+                    <li><strong>Regime Subcrítico (Fr < 0.8):</strong> Escoamento estável e tranquilo.</li>
+                    <li><strong>Regime Crítico/Instável (0.8 &le; Fr &le; 1.2):</strong> Zona de instabilidade na lâmina
+                        d'água. Deve ser evitada.</li>
+                    <li><strong>Regime Supercrítico (Fr > 1.2):</strong> Escoamento torrencial. Requer atenção à
+                        dissipação de energia.</li>
+                </ul>
+            </div>
+
+            <div class="success-box">
+                <strong>✓ Lâmina d'água</strong><br>
+                Relação lâmina/diâmetro (y/D) ideal entre 50% e 85%.
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠ Atenção:</strong> Se alguma verificação apresentar alerta, revise os parâmetros de projeto ou
+                considere soluções alternativas.
+            </div>
+        </section>
+
+        <!-- RELATÓRIOS -->
+        <section id="relatorios">
+            <h2>9. Relatórios e Exportação</h2>
+
+            <h3>9.1 Gerar Relatório</h3>
+            <p>Clique em <strong>"📄 Relatório"</strong> para gerar um relatório técnico completo contendo:</p>
+            <ul>
+                <li>Capa com informações do projeto</li>
+                <li>Sumário executivo</li>
+                <li>Metodologia utilizada</li>
+                <li>Dados de entrada</li>
+                <li>Memória de cálculo</li>
+                <li>Resultados</li>
+                <li>Verificações técnicas</li>
+                <li>Conclusões</li>
+                <li>Referências bibliográficas</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>📄 Formatos:</strong> O relatório é gerado em HTML (compatível com Word/LibreOffice). Se a
+                biblioteca python-docx estiver instalada, também pode ser gerado em DOCX nativo.
+            </div>
+            <!--
+            <h3>9.2 Exportar Resultados</h3>
+            <p>Clique em <strong>"📤 Exportar"</strong> para salvar os resultados em diversos formatos:</p>
+
+            <table>
+                <tr>
+                    <th>Formato</th>
+                    <th>Extensão</th>
+                    <th>Uso</th>
+                </tr>
+                <tr>
+                    <td>GeoPackage</td>
+                    <td>.gpkg</td>
+                    <td>Formato padrão QGIS com geometria</td>
+                </tr>
+                <tr>
+                    <td>Shapefile</td>
+                    <td>.shp</td>
+                    <td>Compatibilidade com outros softwares GIS</td>
+                </tr>
+                <tr>
+                    <td>GeoJSON</td>
+                    <td>.geojson</td>
+                    <td>Web e intercâmbio de dados</td>
+                </tr>
+                <tr>
+                    <td>CSV</td>
+                    <td>.csv</td>
+                    <td>Planilhas e análise de dados</td>
+                </tr>
+                <tr>
+                    <td>Excel</td>
+                    <td>.xlsx</td>
+                    <td>Microsoft Excel</td>
+                </tr>
+            </table>
+            -->
+        </section>
+
+        <!-- FÓRMULAS -->
+        <section id="formulas">
+            <h2>10. Fórmulas Utilizadas</h2>
+
+            <h3>10.1 Método Racional</h3>
+            <div class="formula">
+                Q = (C × I × A) / 3,6
+                <div class="formula-desc">
+                    Q = Vazão (m³/s) | C = Coef. escoamento | I = Intensidade (mm/h) | A = Área (km²)
+                </div>
+            </div>
+
+            <h3>10.2 Tempo de Concentração (Kirpich)</h3>
+            <div class="formula">
+                Tc = 57 × (L³ / H)<sup>0,385</sup>
+                <div class="formula-desc">
+                    Tc = Tempo de concentração (min) | L = Comprimento (km) | H = Desnível (m)
+                </div>
+            </div>
+
+            <h3>10.3 Equação de Manning</h3>
+            <div class="formula">
+                Q = (1/n) × A × R<sup>2/3</sup> × S<sup>1/2</sup>
+                <div class="formula-desc">
+                    Q = Vazão (m³/s) | n = Rugosidade | A = Área seção (m²) | R = Raio hidráulico (m) | S = Declividade
+                    (m/m)
+                </div>
+            </div>
+
+            <h3>10.4 Número de Froude</h3>
+            <div class="formula">
+                Fr = V / √(g × y)
+                <div class="formula-desc">
+                    Fr = Número de Froude | V = Velocidade (m/s) | g = 9,81 m/s² | y = Profundidade hidráulica (m)
+                </div>
+            </div>
+        </section>
+
+        <!-- REFERÊNCIAS -->
+        <section id="referencias">
+            <h2>11. Referências Técnicas</h2>
+            <!-- 
+            <ul>
+                <li>ABNT NBR 10844:1989 - Instalações prediais de águas pluviais</li>
+                <li>TUCCI, C.E.M. Hidrologia: Ciência e Aplicação. ABRH, 2009.</li>
+                <li>Manual de Drenagem Urbana - SUDERHSA/PR</li>
+                <li>Manual de Hidrologia Básica para Estruturas de Drenagem - DNIT</li>
+                <li>Diretrizes Básicas para Projetos de Drenagem Urbana - CETESB</li>
+                <li>Manual de Drenagem e Manejo de Águas Pluviais - São Paulo</li>
+            </ul>
+            -->
+        </section>
+
+        <!-- SUPORTE -->
+        <section id="suporte">
+            <h2>12. Suporte</h2>
+
+            <h3>12.1 Problemas Comuns</h3>
+
+            <table>
+                <tr>
+                    <th>Problema</th>
+                    <th>Solução</th>
+                </tr>
+                <tr>
+                    <td>Plugin não aparece no menu</td>
+                    <td>Verifique se a pasta está no local correto e reinicie o QGIS</td>
+                </tr>
+                <tr>
+                    <td>Erro ao extrair parâmetros</td>
+                    <td>Verifique se as camadas estão corretamente selecionadas</td>
+                </tr>
+                <tr>
+                    <td>Erro ao gerar relatório DOCX</td>
+                    <td>O relatório será gerado em HTML (compatível com Word)</td>
+                </tr>
+                <tr>
+                    <td>Valores de área incorretos</td>
+                    <td>Verifique o sistema de coordenadas do projeto (use projeção métrica)</td>
+                </tr>
+            </table>
+
+            <h3>12.2 Logs do Sistema</h3>
+            <p>Para verificar mensagens de erro detalhadas:</p>
+            <ol>
+                <li>Vá em <code>Sketcher → Sketcher → Sketcher de Log</code></li>
+                <li>Filtre por "MetodoRacionalPro"</li>
+            </ol>
+
+            <div class="info-box">
+                <strong>📧 Contato:</strong> Para reportar bugs ou sugestões, consulte a documentação do projeto.
+            </div>
+        </section>
+
+        <footer>
+            <p><strong>Método Racional Pro</strong> - Plugin QGIS para Cálculo de Drenagem Urbana</p>
+            <p>Versão 1.0.0 | Dezembro 2024</p>
+            <p>Desenvolvido para QGIS 3.16+</p>
+        </footer>
+    </div>
+</body>
+
+</html>

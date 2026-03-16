@@ -1,0 +1,102 @@
+{
+  "tubulacoes": [
+    {
+      "material": "PEAD",
+      "descricao": "Polietileno de Alta Densidade",
+      "rugosidade_min": 0.009,
+      "rugosidade_max": 0.012,
+      "rugosidade_tipica": 0.010,
+      "diametro_min_m": 0.1,
+      "diametro_max_m": 1.2
+    },
+    {
+      "material": "PVC",
+      "descricao": "Policloreto de Vinila",
+      "rugosidade_min": 0.009,
+      "rugosidade_max": 0.011,
+      "rugosidade_tipica": 0.010,
+      "diametro_min_m": 0.05,
+      "diametro_max_m": 0.6
+    },
+    {
+      "material": "Concreto",
+      "descricao": "Tubos de Concreto",
+      "rugosidade_min": 0.012,
+      "rugosidade_max": 0.015,
+      "rugosidade_tipica": 0.013,
+      "diametro_min_m": 0.3,
+      "diametro_max_m": 3.0
+    },
+    {
+      "material": "Ferro Fundido",
+      "descricao": "Tubos de Ferro Fundido",
+      "rugosidade_min": 0.012,
+      "rugosidade_max": 0.015,
+      "rugosidade_tipica": 0.013,
+      "diametro_min_m": 0.1,
+      "diametro_max_m": 1.5
+    },
+    {
+      "material": "Aço",
+      "descricao": "Tubos de Aço",
+      "rugosidade_min": 0.010,
+      "rugosidade_max": 0.014,
+      "rugosidade_tipica": 0.012,
+      "diametro_min_m": 0.1,
+      "diametro_max_m": 2.0
+    }
+  ],
+  "galerias": [
+    {
+      "material": "Concreto Pré-moldado",
+      "descricao": "Galerias Celulares de Concreto",
+      "rugosidade_min": 0.013,
+      "rugosidade_max": 0.017,
+      "rugosidade_tipica": 0.015
+    },
+    {
+      "material": "Concreto Moldado in loco",
+      "descricao": "Galerias de Concreto Armado",
+      "rugosidade_min": 0.014,
+      "rugosidade_max": 0.018,
+      "rugosidade_tipica": 0.016
+    }
+  ],
+  "canais": [
+    {
+      "material": "Concreto Liso",
+      "descricao": "Canal Revestido em Concreto",
+      "rugosidade_min": 0.012,
+      "rugosidade_max": 0.014,
+      "rugosidade_tipica": 0.013
+    },
+    {
+      "material": "Pedra Argamassada",
+      "descricao": "Canal em Pedra com Argamassa",
+      "rugosidade_min": 0.017,
+      "rugosidade_max": 0.025,
+      "rugosidade_tipica": 0.020
+    },
+    {
+      "material": "Gabião",
+      "descricao": "Canal em Gabião",
+      "rugosidade_min": 0.025,
+      "rugosidade_max": 0.035,
+      "rugosidade_tipica": 0.030
+    },
+    {
+      "material": "Terra Natural",
+      "descricao": "Canal em Terra",
+      "rugosidade_min": 0.025,
+      "rugosidade_max": 0.040,
+      "rugosidade_tipica": 0.030
+    },
+    {
+      "material": "Grama",
+      "descricao": "Canal Gramado",
+      "rugosidade_min": 0.030,
+      "rugosidade_max": 0.050,
+      "rugosidade_tipica": 0.035
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "juiz_de_fora - Padrão": {
+    "K": 1450,
+    "a": 0.15,
+    "b": 20,
+    "c": 0.90,
+    "fonte": "COPASA-MG",
+    "municipio": "Juiz de Fora",
+    "estado": "MG"
+  },
+  "juiz_de_fora - Norte Eq.11": {
+    "K": 2314.482,
+    "a": 0.149,
+    "b": 22.129,
+    "c": 0.903,
+    "fonte": "GEASA, 2025",
+    "municipio": "Juiz de Fora",
+    "estado": "MG"
+  },
+  "juiz_de_fora - Sul Eq.10": {
+    "K": 1646.3,
+    "a": 0.171,
+    "b": 15.496,
+    "c": 0.822,
+    "fonte": "GEASA, 2025",
+    "municipio": "Juiz de Fora",
+    "estado": "MG"
+  },
+  "belo_horizonte": {
+    "K": 1447,
+    "a": 0.12,
+    "b": 15,
+    "c": 0.85,
+    "fonte": "COPASA-MG",
+    "municipio": "Belo Horizonte",
+    "estado": "MG"
+  },
+  "sao_paulo": {
+    "K": 1540,
+    "a": 0.14,
+    "b": 16,
+    "c": 0.88,
+    "fonte": "DAEE-SP",
+    "municipio": "São Paulo",
+    "estado": "SP"
+  },
+  "rio_de_janeiro": {
+    "K": 1239,
+    "a": 0.15,
+    "b": 20,
+    "c": 0.74,
+    "fonte": "Rio-Águas",
+    "municipio": "Rio de Janeiro",
+    "estado": "RJ"
+  },
+  "curitiba": {
+    "K": 1360,
+    "a": 0.16,
+    "b": 18,
+    "c": 0.82,
+    "fonte": "SUDERHSA-PR",
+    "municipio": "Curitiba",
+    "estado": "PR"
+  },
+  "porto_alegre": {
+    "K": 1297,
+    "a": 0.14,
+    "b": 12,
+    "c": 0.80,
+    "fonte": "DMAE-RS",
+    "municipio": "Porto Alegre",
+    "estado": "RS"
+  },
+  "brasilia": {
+    "K": 1519,
+    "a": 0.16,
+    "b": 16,
+    "c": 0.86,
+    "fonte": "CAESB-DF",
+    "municipio": "Brasília",
+    "estado": "DF"
+  },
+  "salvador": {
+    "K": 1420,
+    "a": 0.12,
+    "b": 10,
+    "c": 0.78,
+    "fonte": "EMBASA-BA",
+    "municipio": "Salvador",
+    "estado": "BA"
+  },
+  "fortaleza": {
+    "K": 1380,
+    "a": 0.13,
+    "b": 14,
+    "c": 0.76,
+    "fonte": "CAGECE-CE",
+    "municipio": "Fortaleza",
+    "estado": "CE"
+  },
+  "recife": {
+    "K": 1500,
+    "a": 0.14,
+    "b": 12,
+    "c": 0.82,
+    "fonte": "COMPESA-PE",
+    "municipio": "Recife",
+    "estado": "PE"
+  }
+}

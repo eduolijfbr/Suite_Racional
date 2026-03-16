@@ -1,0 +1,12 @@
+Ícones do Plugin Método Racional Pro
+=====================================
+
+Este diretório contém os ícones SVG do plugin:
+
+- icon.svg     - Ícone principal (gota d'água com tubo) - Azul
+- idf.svg      - Curvas IDF (gráfico com curva) - Laranja  
+- database.svg - Banco de Dados (cilindro) - Verde
+- help.svg     - Ajuda (ponto de interrogação) - Roxo
+
+Formato: SVG vetorial 24x24 pixels
+Compatível com QGIS 3.x

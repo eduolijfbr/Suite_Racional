@@ -1,0 +1,151 @@
+================================================================================
+                    MÉTODO RACIONAL PRO - GUIA DE INSTALAÇÃO
+================================================================================
+
+NOME DO PLUGIN: Método Racional Pro
+MENU NO QGIS: Plugins > Método Racional Pro
+TOOLBAR: Uma nova barra de ferramentas "MetodoRacionalPro" será criada
+
+================================================================================
+                              INSTALAÇÃO
+================================================================================
+
+PASSO 1 - Localizar a pasta de plugins do QGIS:
+----------------------------------------------
+A pasta de plugins do QGIS está em:
+
+Windows:
+  %APPDATA%\QGIS\QGIS3\profiles\default\python\plugins\
+
+Para encontrar facilmente:
+  1. Abra o QGIS
+  2. Vá em: Configurações > Perfis de Usuário > Abrir Pasta do Perfil Ativo
+  3. Navegue até: python\plugins\
+
+Ou cole no Explorador de Arquivos:
+  %APPDATA%\QGIS\QGIS3\profiles\default\python\plugins\
+
+
+PASSO 2 - Copiar o plugin:
+--------------------------
+Copie a pasta "metodo_racional_pro" inteira para a pasta de plugins.
+
+A estrutura deve ficar assim:
+  ...\plugins\metodo_racional_pro\
+      ├── __init__.py
+      ├── metadata.txt
+      ├── metodo_racional_pro.py
+      └── ... (demais arquivos)
+
+
+PASSO 3 - Reiniciar o QGIS:
+---------------------------
+Feche completamente o QGIS e abra novamente.
+
+
+PASSO 4 - Ativar o plugin:
+--------------------------
+  1. Vá em: Plugins > Gerenciar e Instalar Plugins...
+  2. Na aba "Instalados", procure por "Método Racional Pro"
+  3. Marque a caixa de seleção para ativar o plugin
+  4. Clique em "Fechar"
+
+
+================================================================================
+                              COMO USAR
+================================================================================
+
+ACESSANDO O PLUGIN:
+-------------------
+Após ativado, você pode acessar o plugin de duas formas:
+
+  1. MENU: Plugins > Método Racional Pro > Método Racional - Cálculo de Drenagem
+
+  2. TOOLBAR: Clique no ícone na barra de ferramentas "MetodoRacionalPro"
+
+
+OPÇÕES DO MENU:
+---------------
+  - Método Racional - Cálculo de Drenagem (janela principal)
+  - Gerenciar Curvas IDF (calculadora de intensidade)
+  - Banco de Dados (configurações e histórico)
+  - Ajuda
+
+
+USANDO A INTERFACE:
+-------------------
+1. Preencha os dados de entrada:
+   - DISTÂNCIA: Comprimento do talvegue (m)
+   - DESNÍVEL: Diferença de altitude (m)
+   - TEMPO: Tempo de concentração (min)
+   - IMPERMEABILIDADE: Coeficiente de escoamento (0-1)
+   - ÁREA: Área da bacia (km²)
+   - RUGOSIDADE: Coeficiente de Manning
+   - DECLIVIDADE: Declividade do conduto (%)
+
+2. Selecione o Tempo de Retorno (2, 5, 10, 25, 50 ou 100 anos)
+
+3. Informe a Intensidade (mm/h) ou use o botão "Curva IDF"
+
+4. Clique em "CALCULAR"
+
+5. Os resultados serão exibidos:
+   - DIÂMETRO: Diâmetro calculado (m)
+   - GALERIA: Diâmetro comercial recomendado (m)
+   - VELOC. ESCOAMENTO: Velocidade (m/s)
+   - VAZÃO: Vazão de projeto (m³/s)
+
+6. Verifique os alertas de verificações técnicas
+
+7. Use os botões para:
+   - GRAVAR CÁLCULOS: Salvar no banco de dados
+   - Relatório: Gerar documento DOCX
+   - Exportar: Salvar em diversos formatos
+
+
+================================================================================
+                         RESOLUÇÃO DE PROBLEMAS
+================================================================================
+
+PROBLEMA: Plugin não aparece na lista
+SOLUÇÃO: 
+  - Verifique se a pasta está no local correto
+  - Verifique se o arquivo __init__.py existe
+  - Reinicie o QGIS completamente
+
+PROBLEMA: Erro ao carregar o plugin
+SOLUÇÃO:
+  - Abra o Console Python do QGIS (Plugins > Console Python)
+  - Verifique as mensagens de erro
+  - Certifique-se que o QGIS é versão 3.16 ou superior
+
+PROBLEMA: Erro "No module named..."
+SOLUÇÃO:
+  - Algumas funcionalidades requerem bibliotecas adicionais
+  - Instale via OSGeo4W Shell ou pip:
+    pip install python-docx openpyxl
+
+PROBLEMA: Ícone não aparece
+SOLUÇÃO:
+  - O plugin usa um ícone padrão do QGIS
+  - Isso não afeta o funcionamento
+
+
+================================================================================
+                              SUPORTE
+================================================================================
+
+Para reportar problemas ou sugestões, verifique os logs em:
+  - QGIS: Visualizar > Painéis > Mensagens de Log
+  - Filtrar por "MetodoRacionalPro"
+
+
+================================================================================
+                              VERSÃO
+================================================================================
+
+Versão: 1.0.0
+QGIS Mínimo: 3.16
+Data: Dezembro 2024
+
+================================================================================
