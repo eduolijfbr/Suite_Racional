@@ -36,7 +36,7 @@ O **Método Racional Pro** guia o projetista por um fluxo de trabalho intuitivo:
 ## 📋 Requisitos e Diretrizes
 
 *   **Plataforma**: Desenvolvido exclusivamente para **QGIS**.
-*   **Aplicação**: Ideal para bacias de microdrenagem urbana entre **50-100 hectares**.
+*   **Aplicação**: Ideal para bacias de microdrenagem urbana até **200 hectares**.
 *   **Melhores Práticas**: Para áreas extensas ou simulações dinâmicas complexas, recomenda-se integração complementar com o SWMM.
 
 ---
