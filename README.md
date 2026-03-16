@@ -48,5 +48,4 @@ Esta suíte foi projetada para oferecer **precisão técnica** e **agilidade na 
 ---
 <p align="center">
   Desenvolvido por <b>Eduardo Oliveira</b> <br>
-  <i>Soluções Inteligentes para Cidades Inteligentes</i>
 </p>
