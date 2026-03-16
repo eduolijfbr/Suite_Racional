@@ -15,8 +15,8 @@ Para instalar a suíte completa no seu QGIS:
 3.  Selecione a aba **Instalar a partir do ZIP**.
 4.  Selecione o arquivo baixado e clique em **Instalar complemento**.
 
-> [!NOTE]
-> Esta estrutura foi otimizada para evitar erros de `ModuleNotFoundError` comuns em instalações manuais. O pacote agora é reconhecido como uma única suíte integrada.
+> [!IMPORTANT]
+> **Antes de instalar**: Exclua qualquer pasta que comece com `Suite_Racional` dentro da pasta de plugins do QGIS (`C:\Users\SEU_USUARIO\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins`) para evitar conflitos de arquivos antigos.
 
 ---
 
