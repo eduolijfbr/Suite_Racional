@@ -4,11 +4,23 @@
 [![License](https://img.shields.io/badge/License-Proprietary-blue.svg)](LICENSE)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/eduolijfbr/Suite_Racional/graphs/commit-activity)
 
-A **Suíte Racional** é um conjunto robusto de plugins para o **QGIS**, desenvolvido especificamente para transformar e acelerar o fluxo de trabalho de engenheiros e gestores urbanos. O projeto centraliza o dimensionamento de microdrenagem em um ambiente geoespacial único, eliminando a fragmentação entre planilhas e mapas.
+A **Suíte Racional** é um conjunto robusto de plugins para o **QGIS**, desenvolvido especificamente para transformar e acelerar o fluxo de trabalho de engenheiros e gestores urbanos. O projeto unifica o cálculo hidrológico, geração de Modelos Digitais de Terreno (MDT) e dimensionamento hidráulico em uma única interface inteligente para QGIS.
+
+## 📦 Instalação Fácil (QGIS)
+
+Para instalar a suíte completa no seu QGIS:
+
+1.  Baixe este repositório como um arquivo **ZIP** (clicando no botão verde `<> Code` > `Download ZIP`).
+2.  No QGIS, vá em **Complementos** > **Gerenciar e Instalar Complementos**.
+3.  Selecione a aba **Instalar a partir do ZIP**.
+4.  Selecione o arquivo baixado e clique em **Instalar complemento**.
+
+> [!NOTE]
+> Esta estrutura foi otimizada para evitar erros de `ModuleNotFoundError` comuns em instalações manuais. O pacote agora é reconhecido como uma única suíte integrada.
 
 ---
 
-## 🛠️ Componentes da Suíte
+## 🛠️ Ferramentas Integradas
 
 O ecossistema é composto por três ferramentas integradas:
 

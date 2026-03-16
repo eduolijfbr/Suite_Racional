@@ -1,0 +1,20 @@
+[general]
+name=Suite Racional
+qgisMinimumVersion=3.4
+description=Conjunto completo de ferramentas para microdrenagem urbana, MDT e medição 3D.
+version=1.0.0
+author=Eduardo Oliveira e Leonardo Leon Leite Moreira
+email=postgisbrasil@gmail.com
+
+about=A Suite Racional integra o Método Racional Pro, Gerador de MDT e ferramentas de Medição 3D em um único pacote de instalação. Desenvolvido para facilitar o fluxo de trabalho de engenharia e geoprocessamento no QGIS.
+
+tracker=https://github.com/eduolijfbr/Suite_Racional/issues
+repository=https://github.com/eduolijfbr/Suite_Racional
+hasProcessingProvider=no
+tags=hydrology,drainage,rational method,mdt,3d,urban drainage
+homepage=https://github.com/eduolijfbr/Suite_Racional
+category=Analysis
+icon=metodo_racional_pro/recursos/icons/icon.png
+
+experimental=False
+deprecated=False
