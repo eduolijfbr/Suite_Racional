@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-class SuiteRacional:
+class SuiteRacionalPro:
     def __init__(self, iface):
         self.iface = iface
         

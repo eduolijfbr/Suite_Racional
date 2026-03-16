@@ -1,5 +1,5 @@
 @echo off
-:: Script para atualizar o repositório Suíte Racional no GitHub
+:: Script para atualizar o repositório Suíte Racional Pro no GitHub
 :: Desenvolvido para facilitar o fluxo de trabalho
 
 echo [1/3] Adicionando arquivos modificados...

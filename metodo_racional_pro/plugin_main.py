@@ -21,13 +21,13 @@ class MetodoRacionalPro:
         
         # Inicializar variáveis
         self.actions = []
-        self.menu = '&Hub Engenharia'
+        self.menu = '&Suite Racional Pro'
         
         # Compartilhar toolbar
-        self.toolbar_name = 'HubEngenharia'
+        self.toolbar_name = 'SuiteRacionalPro'
         self.toolbar = self.iface.mainWindow().findChild(QToolBar, self.toolbar_name)
         if not self.toolbar:
-            self.toolbar = self.iface.addToolBar('Hub Engenharia')
+            self.toolbar = self.iface.addToolBar('Suite Racional Pro')
             self.toolbar.setObjectName(self.toolbar_name)
         
         # Dialog
@@ -148,7 +148,7 @@ class MetodoRacionalPro:
         """Remove plugin do QGIS"""
         for action in self.actions:
             self.iface.removePluginMenu(
-                '&Hub Engenharia',
+                '&Suite Racional Pro',
                 action
             )
             self.iface.removeToolBarIcon(action)

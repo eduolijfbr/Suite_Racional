@@ -359,8 +359,8 @@ class MDTPlugin:
         self.iface = iface
         self.plugin_dir = os.path.dirname(__file__)
         self.action = None
-        self.menu = "&Hub Engenharia"
-        self.toolbar_name = "HubEngenharia"
+        self.menu = "&Suite Racional Pro"
+        self.toolbar_name = "SuiteRacionalPro"
         self.toolbar = None
 
     def initGui(self):
@@ -373,7 +373,7 @@ class MDTPlugin:
         
         self.toolbar = self.iface.mainWindow().findChild(QToolBar, self.toolbar_name)
         if not self.toolbar:
-            self.toolbar = self.iface.addToolBar('Hub Engenharia')
+            self.toolbar = self.iface.addToolBar('Suite Racional Pro')
             self.toolbar.setObjectName(self.toolbar_name)
             
         self.toolbar.addAction(self.action)

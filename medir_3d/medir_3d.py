@@ -25,20 +25,20 @@ class Medir3DPlugin:
         self.action.setStatusTip("Abrir painel Medir 3D")
         self.action.triggered.connect(self.run)
 
-        self.toolbar_name = 'HubEngenharia'
+        self.toolbar_name = 'SuiteRacionalPro'
         self.toolbar = self.iface.mainWindow().findChild(QToolBar, self.toolbar_name)
         if not self.toolbar:
-            self.toolbar = self.iface.addToolBar('Hub Engenharia')
+            self.toolbar = self.iface.addToolBar('Suite Racional Pro')
             self.toolbar.setObjectName(self.toolbar_name)
             
         self.toolbar.addAction(self.action)
-        self.iface.addPluginToMenu("&Hub Engenharia", self.action)
+        self.iface.addPluginToMenu("&Suite Racional Pro", self.action)
 
     def unload(self):
         self.limpar_dados(permanente=True)
         if self.dockwidget:
             self.iface.removeDockWidget(self.dockwidget)
-        self.iface.removePluginMenu("&Hub Engenharia", self.action)
+        self.iface.removePluginMenu("&Suite Racional Pro", self.action)
         if hasattr(self, 'toolbar') and self.toolbar:
             self.toolbar.removeAction(self.action)
 

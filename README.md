@@ -1,10 +1,10 @@
-# 🌊 Suíte Racional
+# 🌊 Suíte Racional Pro
 
 [![QGIS](https://img.shields.io/badge/QGIS-3.x-green.svg?logo=qgis&logoColor=white)](https://qgis.org/)
 [![License](https://img.shields.io/badge/License-Proprietary-blue.svg)](LICENSE)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/eduolijfbr/Suite_Racional/graphs/commit-activity)
 
-A **Suíte Racional** é um conjunto robusto de plugins para o **QGIS**, desenvolvido especificamente para transformar e acelerar o fluxo de trabalho de engenheiros e gestores urbanos. O projeto unifica o cálculo hidrológico, geração de Modelos Digitais de Terreno (MDT) e dimensionamento hidráulico em uma única interface inteligente para QGIS.
+A **Suíte Racional Pro** é um conjunto robusto de plugins para o **QGIS**, desenvolvido especificamente para transformar e acelerar o fluxo de trabalho de engenheiros e gestores urbanos. O projeto unifica o cálculo hidrológico, geração de Modelos Digitais de Terreno (MDT) e dimensionamento hidráulico em uma única interface inteligente para QGIS.
 
 ## 📦 Instalação Fácil (QGIS)
 
