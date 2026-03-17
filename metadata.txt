@@ -1,6 +1,7 @@
 [general]
 name=Suite Racional Pro
 qgisMinimumVersion=3.4
+qgisMaximumVersion=4.99
 description=Conjunto completo de ferramentas para microdrenagem urbana, MDT e medição 3D.
 version=1.0.0
 author=Eduardo Oliveira e Leonardo Leon Leite Moreira
