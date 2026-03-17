@@ -391,7 +391,7 @@ class MDTPlugin:
     def run(self):
         if not hasattr(self, 'dlg') or self.dlg is None:
             self.dlg = MDTPluginDialog(self.iface, self.iface.mainWindow())
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dlg)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dlg)
         
         if self.dlg.isVisible():
             self.dlg.hide()

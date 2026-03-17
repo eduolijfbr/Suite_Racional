@@ -38,12 +38,12 @@ def renderizar_camada_para_imagem(layer_raster, extent, width, height):
     settings.setLayers([layer_raster])
     settings.setExtent(extent)
     settings.setOutputSize(QSize(width, height))
-    settings.setBackgroundColor(Qt.white)
+    settings.setBackgroundColor(Qt.GlobalColor.white)
     settings.setDestinationCrs(layer_raster.crs())
     
     # Criar imagem de saída
     image = QImage(width, height, QImage.Format_RGB888)
-    image.fill(Qt.white)
+    image.fill(Qt.GlobalColor.white)
     
     # Renderizar
     painter = QPainter(image)
@@ -273,7 +273,7 @@ def salvar_imagem_original(rgb, valid_mask, output_dir):
         
         # Criar imagem RGB original
         img = QImage(w, h, QImage.Format_RGB888)
-        img.fill(Qt.white)
+        img.fill(Qt.GlobalColor.white)
         
         for row in range(h):
             for col in range(w):
@@ -310,7 +310,7 @@ def salvar_imagem_classificacao_simples(rgb, classification_map, valid_mask, out
         
         # Criar imagem de classificação
         img = QImage(w, h, QImage.Format_RGB888)
-        img.fill(Qt.white)
+        img.fill(Qt.GlobalColor.white)
         
         for row in range(h):
             for col in range(w):

@@ -172,7 +172,7 @@ class ImpermeabilidadeDialog(QDialog):
         self.scrollImagem.setStyleSheet("background-color: #FAFAFA; border: 1px solid #E0E0E0;")
         
         self.lblImagem = QLabel("A imagem de classificação aparecerá aqui após o cálculo.")
-        self.lblImagem.setAlignment(Qt.AlignCenter)
+        self.lblImagem.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lblImagem.setStyleSheet("color: #9E9E9E;")
         self.scrollImagem.setWidget(self.lblImagem)
         

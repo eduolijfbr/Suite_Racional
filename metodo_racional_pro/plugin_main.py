@@ -169,7 +169,7 @@ class MetodoRacionalPro:
                 "Método Racional Pro", 
                 self.dlg
             )
-            self.dlg = self.dock_skill.setup_dock(Qt.RightDockWidgetArea)
+            self.dlg = self.dock_skill.setup_dock(Qt.DockWidgetArea.RightDockWidgetArea)
             
         # Carregar camadas disponíveis
         self.dlg.carregar_camadas_projeto()
