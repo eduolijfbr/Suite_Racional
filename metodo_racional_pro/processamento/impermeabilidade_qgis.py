@@ -42,7 +42,7 @@ def renderizar_camada_para_imagem(layer_raster, extent, width, height):
     settings.setDestinationCrs(layer_raster.crs())
     
     # Criar imagem de saída
-    image = QImage(width, height, QImage.Format_RGB888)
+    image = QImage(width, height, QImage.Format.Format_RGB888)
     image.fill(Qt.GlobalColor.white)
     
     # Renderizar
@@ -272,7 +272,7 @@ def salvar_imagem_original(rgb, valid_mask, output_dir):
         h, w = rgb.shape[1], rgb.shape[2]
         
         # Criar imagem RGB original
-        img = QImage(w, h, QImage.Format_RGB888)
+        img = QImage(w, h, QImage.Format.Format_RGB888)
         img.fill(Qt.GlobalColor.white)
         
         for row in range(h):
@@ -309,7 +309,7 @@ def salvar_imagem_classificacao_simples(rgb, classification_map, valid_mask, out
         h, w = classification_map.shape
         
         # Criar imagem de classificação
-        img = QImage(w, h, QImage.Format_RGB888)
+        img = QImage(w, h, QImage.Format.Format_RGB888)
         img.fill(Qt.GlobalColor.white)
         
         for row in range(h):

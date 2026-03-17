@@ -3185,7 +3185,7 @@ class DetalhesImpermeabilidadeDialog(QDialog):
             bytes_per_line = ch * w_rgb
             
             # Criar QImage a partir do buffer tobytes() para evitar problemas de memória/alinhamento
-            qimg_rgb = QImage(rgb_transposed.tobytes(), w_rgb, h_rgb, bytes_per_line, QImage.Format_RGB888).copy()
+            qimg_rgb = QImage(rgb_transposed.tobytes(), w_rgb, h_rgb, bytes_per_line, QImage.Format.Format_RGB888).copy()
             
             # Criar Imagem de Classificação
             # Mapear classes para cores
@@ -3206,7 +3206,7 @@ class DetalhesImpermeabilidadeDialog(QDialog):
             class_color[mask_shadow] = [30, 144, 255] # Azul Dodger
             
             # QImage para classificação
-            qimg_class = QImage(class_color.tobytes(), w, h, 3 * w, QImage.Format_RGB888).copy()
+            qimg_class = QImage(class_color.tobytes(), w, h, 3 * w, QImage.Format.Format_RGB888).copy()
             
             # Combinar imagens em uma QPixmap
             final_width = w_rgb + w + 20 # 20px gap

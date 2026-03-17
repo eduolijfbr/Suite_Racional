@@ -611,8 +611,8 @@ class ImpermeabilidadeDialog(QDialog):
             h, w = classification.shape
             
             # Criar imagem RGB usando QImage pixel por pixel (mais lento mas seguro)
-            qimg_rgb = QImage(w, h, QImage.Format_RGB888)
-            qimg_class = QImage(w, h, QImage.Format_RGB888)
+            qimg_rgb = QImage(w, h, QImage.Format.Format_RGB888)
+            qimg_class = QImage(w, h, QImage.Format.Format_RGB888)
             
             # Cores de classificação
             color_impermeavel = QColor(80, 80, 80)
