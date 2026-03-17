@@ -4,6 +4,7 @@ Uses gdal.Grid() for Delaunay triangulation-based linear interpolation.
 """
 import os
 import math
+import random
 import tempfile
 import traceback
 from osgeo import gdal, ogr, osr
@@ -61,11 +62,16 @@ class MDTAlgorithm:
                     "São necessários pelo menos 3 pontos para triangulação."
                 )
 
-            # Filtering duplicates (crucial for Delaunay triangulation stability)
+            # Filtering duplicates and adding tiny jitter (crucial for Delaunay stability)
+            # Jitter of 0.1mm prevents perfectly collinear points from causing triangulation failure
             unique_points = {}
             for x, y, z in points_xyz:
+                # Add tiny random jitter (1e-4 meters = 0.1mm)
+                xj = x + (random.random() - 0.5) * 0.0002
+                yj = y + (random.random() - 0.5) * 0.0002
+                
                 # Key with 3 decimal places to avoid precision issues
-                key = (round(x, 3), round(y, 3))
+                key = (round(xj, 3), round(yj, 3))
                 if key not in unique_points:
                     unique_points[key] = z
             
@@ -169,10 +175,31 @@ class MDTAlgorithm:
                 mem_ds,
                 options=grid_options
             )
+            
+            # --- Fallback to IDW (Inverse Distance Weighting) if Linear fails ---
+            if result_ds is None:
+                self.log("Triangulação Delaunay falhou. Tentando fallback para IDW (invdist)...")
+                grid_options_fallback = gdal.GridOptions(
+                    format="GTiff",
+                    outputType=gdal.GDT_Float32,
+                    algorithm="invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=-9999",
+                    zfield="Z",
+                    width=width,
+                    height=height,
+                    outputBounds=[xmin_snap, ymin_snap, xmax_snap, ymax_snap],
+                    outputSRS=srs.ExportToWkt(),
+                    creationOptions=["COMPRESS=DEFLATE", "TILED=YES"]
+                )
+                
+                result_ds = gdal.Grid(
+                    output_path,
+                    mem_ds,
+                    options=grid_options_fallback
+                )
 
             if result_ds is None:
                 gdal_err = gdal.GetLastErrorMsg()
-                raise Exception(f"Falha na triangulação Delaunay: {gdal_err or 'Erro desconhecido GDAL'}")
+                raise Exception(f"Falha na geração do MDT (Linear e IDW): {gdal_err or 'Erro desconhecido GDAL'}")
 
             # Finalize metadata
             band = result_ds.GetRasterBand(1)
