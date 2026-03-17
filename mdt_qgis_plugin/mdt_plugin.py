@@ -151,6 +151,9 @@ class MDTPluginDialog(QDockWidget):
         QgsApplication.processEvents()
 
     def run_process(self):
+        # Define progress function for use in extraction loops
+        progress_fn = self._update_progress
+        
         layer = self._get_selected_layer()
         resolution = self.spnResolution.value()
         z_field_name = self.cboZField.currentText()
