@@ -64,12 +64,12 @@ class ImpermeabilidadeDialog(QDialog):
         titulo = QLabel("🏗️ Análise de Impermeabilidade do Solo")
         titulo.setFont(QFont("Arial", 16, QFont.Bold))
         titulo.setStyleSheet("color: white;")
-        titulo.setAlignment(Qt.AlignCenter)
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(titulo)
         
         subtitulo = QLabel("Classificação ternária de pixels: Impermeável | Vegetação | Sombra/Água")
         subtitulo.setStyleSheet("color: #E3F2FD; font-size: 11px;")
-        subtitulo.setAlignment(Qt.AlignCenter)
+        subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(subtitulo)
         
         layout.addWidget(header)
@@ -475,7 +475,7 @@ class ImpermeabilidadeDialog(QDialog):
         self.lblStatus.setText("⏳ Calculando... Por favor, aguarde.")
         self.lblStatus.setStyleSheet("color: #FF9800;")
         self.btnCalcular.setEnabled(False)
-        self.setCursor(Qt.WaitCursor)
+        self.setCursor(Qt.CursorShape.WaitCursor)
         
         # Forçar atualização da UI
         QApplication.processEvents()
@@ -545,7 +545,7 @@ class ImpermeabilidadeDialog(QDialog):
             
         finally:
             self.btnCalcular.setEnabled(True)
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.CursorShape.ArrowCursor)
             
     def obter_geometria_unificada(self, layer):
         """Obtém geometria unificada de todas as feições da camada"""
@@ -646,12 +646,12 @@ class ImpermeabilidadeDialog(QDialog):
             final_height = h + 50
             
             pixmap = QPixmap(final_width, final_height)
-            pixmap.fill(Qt.white)
+            pixmap.fill(Qt.GlobalColor.white)
             
             painter = QPainter(pixmap)
             
             # Títulos
-            painter.setPen(Qt.black)
+            painter.setPen(Qt.GlobalColor.black)
             font = QFont("Arial", 11, QFont.Bold)
             painter.setFont(font)
             painter.drawText(10, 20, "Imagem Original (RGB)")
@@ -665,7 +665,7 @@ class ImpermeabilidadeDialog(QDialog):
             
             # Exibir no label
             self.lblImagem.setPixmap(pixmap)
-            self.lblImagem.setAlignment(Qt.AlignCenter)
+            self.lblImagem.setAlignment(Qt.AlignmentFlag.AlignCenter)
             
         except Exception as e:
             self.lblImagem.setText(f"Erro ao gerar visualização: {str(e)}")

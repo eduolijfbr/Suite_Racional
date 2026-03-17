@@ -35,7 +35,7 @@ class MDTPluginDialog(QDockWidget):
         super().__init__("MDT Generator", parent)
         self.iface = iface
         self.setObjectName("MDTGeneratorDock")
-        self.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea)
         
         # Widget principal
         self.main_widget = QWidget()

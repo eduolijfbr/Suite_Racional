@@ -13,7 +13,7 @@ class QgisSmartDockSkill:
         self.layer_type_req = layer_type_required
         self.dock_widget = self.ui
 
-    def setup_dock(self, area=Qt.RightDockWidgetArea):
+    def setup_dock(self, area=Qt.DockWidgetArea.RightDockWidgetArea):
         self.iface.addDockWidget(area, self.dock_widget)
         
         # Conecta o monitoramento do projeto

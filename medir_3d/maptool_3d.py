@@ -13,8 +13,8 @@ from qgis.core import (
     QgsWkbTypes
 )
 from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand
-from PyQt5.QtCore import Qt, pyqtSignal, QVariant
-from PyQt5.QtGui import QColor
+from qgis.PyQt.QtCore import Qt, pyqtSignal, QVariant
+from qgis.PyQt.QtGui import QColor
 
 class MapTool3D(QgsMapToolEmitPoint):
     
@@ -32,7 +32,7 @@ class MapTool3D(QgsMapToolEmitPoint):
         self.last_points = []
         self.last_pvs = []  # Armazena resultado dos PVs para perfil
         self.last_perfil_terrain = []  # Armazena perfil do terreno
-        self.setCursor(Qt.CrossCursor)
+        self.setCursor(Qt.CursorShape.CrossCursor)
         self.total_dist_2d = 0.0
         self.total_dist_3d = 0.0
         
@@ -63,11 +63,11 @@ class MapTool3D(QgsMapToolEmitPoint):
             self.reset_measurement()
             return
 
-        if event.button() == Qt.RightButton:
+        if event.button() == Qt.MouseButton.RightButton:
             self.finalizar_medicao(raster_layer)
             return
 
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             point = self.toMapCoordinates(event.pos())
             z_value = self.get_z_at_point(point, raster_layer)
             

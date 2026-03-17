@@ -1,7 +1,7 @@
 import os
-from PyQt5.QtCore import Qt, QVariant
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QMessageBox
+from qgis.PyQt.QtCore import Qt, QVariant
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QMessageBox
 from qgis.core import QgsProject, QgsMapLayerType, QgsSettings, QgsVectorLayer, QgsField, QgsMessageLog, Qgis
 from .medir_3d_dockwidget import Medir3DDockWidget
 from .maptool_3d import MapTool3D
@@ -17,7 +17,7 @@ class Medir3DPlugin:
 
     def initGui(self):
         # Configurar menu e barra de ferramentas
-        from PyQt5.QtWidgets import QToolBar
+        from qgis.PyQt.QtWidgets import QToolBar
         icon_path = os.path.join(self.plugin_dir, 'icon.svg')
         self.action = QAction(QIcon(icon_path), "Medir 3D", self.iface.mainWindow())
         self.action.setObjectName("Medir3DAction")
@@ -45,7 +45,7 @@ class Medir3DPlugin:
     def run(self):
         if not self.dockwidget:
             self.dockwidget = Medir3DDockWidget()
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockwidget)
             
             # Conectar sinais
             self.dockwidget.btn_medir_distancia.clicked.connect(self.ativar_medicao)

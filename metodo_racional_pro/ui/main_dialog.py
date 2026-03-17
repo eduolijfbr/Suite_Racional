@@ -55,7 +55,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
         
         # Configurar DockWidget
         self.setObjectName("MetodoRacionalProDock")
-        self.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea)
         
         # Widget principal e layout
         self.main_widget = QWidget()
@@ -136,10 +136,10 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
         msg = QMessageBox(self)
         msg.setWindowTitle(f"Ajuda: {titulo}")
         msg.setIcon(QMessageBox.Information)
-        msg.setTextFormat(Qt.RichText)
+        msg.setTextFormat(Qt.TextFormat.RichText)
         msg.setText(texto)
         msg.setStandardButtons(QMessageBox.Ok)
-        msg.setWindowFlags(msg.windowFlags() | Qt.WindowStaysOnTopHint)
+        msg.setWindowFlags(msg.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         msg.exec_()
         
     def setup_ui(self):
@@ -153,7 +153,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
         
         # Título compacto
         titulo = QLabel("MÉTODO RACIONAL PRO")
-        titulo.setAlignment(Qt.AlignCenter)
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         titulo.setFont(QFont("Arial", 12, QFont.Bold))
         titulo.setStyleSheet("color: #2196F3; margin: 2px;")
         layout_container.addWidget(titulo)
@@ -1289,7 +1289,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
             return
             
         try:
-            self.setCursor(Qt.WaitCursor)
+            self.setCursor(Qt.CursorShape.WaitCursor)
             
             # Obter camada de área de estudo
             layer_area = self.cmbAreaEstudo.currentData()
@@ -1481,7 +1481,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
                 Qgis.Critical
             )
         finally:
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.CursorShape.ArrowCursor)
             # Resetar barra de progresso se houver (opcional, dependendo da UI)
             self.iface.messageBar().clearWidgets()
             
@@ -2407,7 +2407,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
                 
             dados = self.coletar_dados_formulario()
             
-            self.setCursor(Qt.WaitCursor)
+            self.setCursor(Qt.CursorShape.WaitCursor)
             
             # Importar módulo de cálculo
             from ..hidrologia.metodo_racional import MetodoRacional
@@ -2507,7 +2507,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
             )
             
         finally:
-            self.setCursor(Qt.ArrowCursor)
+            self.setCursor(Qt.CursorShape.ArrowCursor)
             
     def exibir_resultados(self):
         """Exibe resultados na interface"""
@@ -3048,7 +3048,7 @@ class DetalhesImpermeabilidadeDialog(QDialog):
         img_layout.setContentsMargins(5, 5, 5, 5)
         
         self.lbl_imagem = QLabel()
-        self.lbl_imagem.setAlignment(Qt.AlignCenter)
+        self.lbl_imagem.setAlignment(Qt.AlignmentFlag.AlignCenter)
         # Importante: não usar setScaledContents(True) diretamente pois distorce a proporção
         # Faremos o redimensionamento manual mantendo aspect ratio
         img_layout.addWidget(self.lbl_imagem)
@@ -3150,10 +3150,10 @@ class DetalhesImpermeabilidadeDialog(QDialog):
                         final_height = max(h_orig, h_class) + 40
                         
                         pixmap = QPixmap(final_width, final_height)
-                        pixmap.fill(Qt.white)
+                        pixmap.fill(Qt.GlobalColor.white)
                         
                         painter = QPainter(pixmap)
-                        painter.setPen(Qt.black)
+                        painter.setPen(Qt.GlobalColor.black)
                         painter.setFont(QFont("Arial", 12, QFont.Bold))
                         painter.drawText(10, 25, "Original (RGB) - Carregado de Arquivo")
                         painter.drawText(w_orig + 30, 25, "Classificação - Carregado de Arquivo")
@@ -3168,8 +3168,8 @@ class DetalhesImpermeabilidadeDialog(QDialog):
                         
                         scaled_pixmap = pixmap.scaled(
                             target_width, target_height,
-                            Qt.KeepAspectRatio,
-                            Qt.SmoothTransformation
+                            Qt.AspectRatioMode.KeepAspectRatio,
+                            Qt.TransformationMode.SmoothTransformation
                         )
                         
                         self.lbl_imagem.setPixmap(scaled_pixmap)
@@ -3213,12 +3213,12 @@ class DetalhesImpermeabilidadeDialog(QDialog):
             final_height = max(h_rgb, h) + 40 # +40 para titulos
             
             pixmap = QPixmap(final_width, final_height)
-            pixmap.fill(Qt.white)
+            pixmap.fill(Qt.GlobalColor.white)
             
             painter = QPainter(pixmap)
             
             # Títulos
-            painter.setPen(Qt.black)
+            painter.setPen(Qt.GlobalColor.black)
             font = QFont("Arial", 12, QFont.Bold)
             painter.setFont(font)
             painter.drawText(10, 25, "Original (RGB)")
@@ -3237,8 +3237,8 @@ class DetalhesImpermeabilidadeDialog(QDialog):
             
             scaled_pixmap = pixmap.scaled(
                 target_width, target_height,
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
             )
             
             self.lbl_imagem.setPixmap(scaled_pixmap)

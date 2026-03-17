@@ -385,7 +385,7 @@ class TcDialog(QDialog):
         
         for i, (key, nome, tc) in enumerate(resultados):
             item = QTableWidgetItem(f"{tc:.2f} min")
-            item.setTextAlignment(Qt.AlignCenter)
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.tblComparacao.setItem(0, i, item)
             
         self.tblComparacao.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -407,9 +407,9 @@ class TcDialog(QDialog):
             item = self.tblComparacao.item(0, c)
             if item:
                 if c == col:
-                    item.setBackground(Qt.green)
+                    item.setBackground(Qt.GlobalColor.green)
                 else:
-                    item.setBackground(Qt.white)
+                    item.setBackground(Qt.GlobalColor.white)
         
     def get_tempo(self):
         """Retorna tempo calculado"""

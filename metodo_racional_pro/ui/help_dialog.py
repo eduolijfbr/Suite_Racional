@@ -35,7 +35,7 @@ class HelpDialog(QDialog):
         """Configura a interface"""
         self.setWindowTitle("Ajuda - Método Racional Pro")
         self.setMinimumSize(900, 700)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMaximizeButtonHint)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowMaximizeButtonHint)
         
         layout = QVBoxLayout(self)
         
@@ -43,7 +43,7 @@ class HelpDialog(QDialog):
         titulo = QLabel("📚 Manual do Usuário - Método Racional Pro")
         titulo.setFont(QFont("Arial", 14, QFont.Bold))
         titulo.setStyleSheet("color: #1565C0; padding: 10px;")
-        titulo.setAlignment(Qt.AlignCenter)
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(titulo)
         
         # Área de conteúdo

@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import (
+from qgis.PyQt.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QComboBox, 
     QPushButton, QLabel, QPlainTextEdit, QLineEdit, QHBoxLayout
 )
-from PyQt5.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
 
 class Medir3DDockWidget(QDockWidget):
     def __init__(self, parent=None):

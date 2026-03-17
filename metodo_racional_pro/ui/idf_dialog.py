@@ -227,7 +227,7 @@ class IDFDialog(QDialog):
         
     def toggle_edicao(self, state):
         """Habilita/desabilita edição dos parâmetros"""
-        self.modo_edicao = state == Qt.Checked
+        self.modo_edicao = state == Qt.CheckState.Checked
         self.txtK.setReadOnly(not self.modo_edicao)
         self.txtA.setReadOnly(not self.modo_edicao)
         self.txtB.setReadOnly(not self.modo_edicao)
