@@ -1007,7 +1007,14 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
         resultado = {}
         for k in chaves_manter:
             if k in dados:
-                resultado[k] = dados[k]
+                val = dados[k]
+                # Converter numpy tipos para tipos padrão Python (int/float)
+                if isinstance(val, (np.integer, np.int64, np.int32)):
+                    resultado[k] = int(val)
+                elif isinstance(val, (np.floating, np.float64, np.float32)):
+                    resultado[k] = float(val)
+                else:
+                    resultado[k] = val
         
         return resultado
 

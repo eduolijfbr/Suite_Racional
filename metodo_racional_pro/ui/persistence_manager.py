@@ -6,6 +6,19 @@ Centraliza operações de salvamento e carregamento de dados no projeto QGIS
 
 from qgis.core import QgsProject
 import json
+import numpy as np
+
+
+class QProjectJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder to handle numpy types and other objects."""
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
 
 class PersistenceManager:
@@ -26,8 +39,8 @@ class PersistenceManager:
         full_key = f"{PersistenceManager.PREFIX}_{key}"
         
         if isinstance(value, (dict, list)):
-            # Serializar estruturas complexas como JSON
-            projeto.writeEntry(PersistenceManager.PREFIX, full_key, json.dumps(value, ensure_ascii=False))
+            # Serializar estruturas complexas como JSON com suporte a numpy
+            projeto.writeEntry(PersistenceManager.PREFIX, full_key, json.dumps(value, ensure_ascii=False, cls=QProjectJSONEncoder))
         elif isinstance(value, bool):
             projeto.writeEntryBool(PersistenceManager.PREFIX, full_key, value)
         elif isinstance(value, int):
