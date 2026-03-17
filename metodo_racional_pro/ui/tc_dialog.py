@@ -388,7 +388,7 @@ class TcDialog(QDialog):
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.tblComparacao.setItem(0, i, item)
             
-        self.tblComparacao.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tblComparacao.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         
     def ao_clicar_celula(self, row, col):
         """Ao clicar em uma célula da tabela, seleciona o valor correspondente"""

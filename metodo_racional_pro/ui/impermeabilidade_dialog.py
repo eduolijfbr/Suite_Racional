@@ -62,7 +62,7 @@ class ImpermeabilidadeDialog(QDialog):
         header_layout = QVBoxLayout(header)
         
         titulo = QLabel("🏗️ Análise de Impermeabilidade do Solo")
-        titulo.setFont(QFont("Arial", 16, QFont.Bold))
+        titulo.setFont(QFont("Arial", 16, QFont.Weight.Bold))
         titulo.setStyleSheet("color: white;")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(titulo)
@@ -144,7 +144,7 @@ class ImpermeabilidadeDialog(QDialog):
         
         # Percentual
         self.lblPercentual = QLabel("---%")
-        self.lblPercentual.setFont(QFont("Arial", 24, QFont.Bold))
+        self.lblPercentual.setFont(QFont("Arial", 24, QFont.Weight.Bold))
         self.lblPercentual.setStyleSheet("color: #1976D2;")
         grid_resultados.addWidget(self.lblPercentual, 0, 2)
         
@@ -197,7 +197,7 @@ class ImpermeabilidadeDialog(QDialog):
             stats_layout.addWidget(lbl, row, col)
             
             val_lbl = QLabel("---")
-            val_lbl.setFont(QFont("Arial", 10, QFont.Bold))
+            val_lbl.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             stats_layout.addWidget(val_lbl, row, col + 1)
             self.stats_labels[key] = val_lbl
             
@@ -652,7 +652,7 @@ class ImpermeabilidadeDialog(QDialog):
             
             # Títulos
             painter.setPen(Qt.GlobalColor.black)
-            font = QFont("Arial", 11, QFont.Bold)
+            font = QFont("Arial", 11, QFont.Weight.Bold)
             painter.setFont(font)
             painter.drawText(10, 20, "Imagem Original (RGB)")
             painter.drawText(w + gap + 10, 20, "Classificação")

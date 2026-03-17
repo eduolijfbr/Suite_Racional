@@ -135,10 +135,10 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
         """Exibe QMessageBox com suporte a HTML"""
         msg = QMessageBox(self)
         msg.setWindowTitle(f"Ajuda: {titulo}")
-        msg.setIcon(QMessageBox.Information)
+        msg.setIcon(QMessageBox.Icon.Information)
         msg.setTextFormat(Qt.TextFormat.RichText)
         msg.setText(texto)
-        msg.setStandardButtons(QMessageBox.Ok)
+        msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.setWindowFlags(msg.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
         msg.exec_()
         
@@ -154,7 +154,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
         # Título compacto
         titulo = QLabel("MÉTODO RACIONAL PRO")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        titulo.setFont(QFont("Arial", 12, QFont.Bold))
+        titulo.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         titulo.setStyleSheet("color: #2196F3; margin: 2px;")
         layout_container.addWidget(titulo)
         
@@ -178,7 +178,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
         # ScrollArea para telas pequenas
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
         scroll_layout.setContentsMargins(0, 0, 0, 0)
@@ -2989,10 +2989,10 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
             self,
             "Confirmar Remoção",
             "Deseja realmente remover os dados permanentemente?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         
-        if resposta == QMessageBox.Yes:
+        if resposta == QMessageBox.StandardButton.Yes:
             self.limpar_formulario()
             QMessageBox.information(
                 self,
@@ -3029,13 +3029,13 @@ class DetalhesImpermeabilidadeDialog(QDialog):
         h_layout = QHBoxLayout(header)
         
         lbl_titulo = QLabel("Análise de Impermeabilidade do Solo")
-        lbl_titulo.setFont(QFont("Arial", 14, QFont.Bold))
+        lbl_titulo.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         h_layout.addWidget(lbl_titulo)
         
         h_layout.addStretch()
         
         self.lbl_percentual = QLabel()
-        self.lbl_percentual.setFont(QFont("Arial", 16, QFont.Bold))
+        self.lbl_percentual.setFont(QFont("Arial", 16, QFont.Weight.Bold))
         self.lbl_percentual.setStyleSheet("color: #1976D2;")
         h_layout.addWidget(self.lbl_percentual)
         
@@ -3071,7 +3071,7 @@ class DetalhesImpermeabilidadeDialog(QDialog):
         for i, (label, key) in enumerate(items):
             stats_layout.addWidget(QLabel(label), i, 0)
             val_lbl = QLabel()
-            val_lbl.setFont(QFont("Arial", 10, QFont.Bold))
+            val_lbl.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             stats_layout.addWidget(val_lbl, i, 1)
             self.stats_labels[key] = val_lbl
             
@@ -3154,7 +3154,7 @@ class DetalhesImpermeabilidadeDialog(QDialog):
                         
                         painter = QPainter(pixmap)
                         painter.setPen(Qt.GlobalColor.black)
-                        painter.setFont(QFont("Arial", 12, QFont.Bold))
+                        painter.setFont(QFont("Arial", 12, QFont.Weight.Bold))
                         painter.drawText(10, 25, "Original (RGB) - Carregado de Arquivo")
                         painter.drawText(w_orig + 30, 25, "Classificação - Carregado de Arquivo")
                         
@@ -3219,7 +3219,7 @@ class DetalhesImpermeabilidadeDialog(QDialog):
             
             # Títulos
             painter.setPen(Qt.GlobalColor.black)
-            font = QFont("Arial", 12, QFont.Bold)
+            font = QFont("Arial", 12, QFont.Weight.Bold)
             painter.setFont(font)
             painter.drawText(10, 25, "Original (RGB)")
             painter.drawText(w_rgb + 30, 25, "Classificação")

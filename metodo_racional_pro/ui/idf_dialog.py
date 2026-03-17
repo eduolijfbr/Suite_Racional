@@ -375,10 +375,10 @@ class IDFDialog(QDialog):
                 f"K = {K}\na = {a}\nb = {b}\nc = {c}\n"
                 f"Fonte: {fonte}\n\n"
                 "Estes parâmetros serão salvos e estarão disponíveis nas próximas sessões.",
-                QMessageBox.Yes | QMessageBox.No
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
             
-            if resposta == QMessageBox.Yes:
+            if resposta == QMessageBox.StandardButton.Yes:
                 # Salvar nos parâmetros do usuário
                 self.curvas_usuario[cidade] = {
                     'K': K, 'a': a, 'b': b, 'c': c, 'fonte': fonte
@@ -452,10 +452,10 @@ class IDFDialog(QDialog):
             self, "Confirmar Exclusão",
             f"Deseja excluir a curva '{cidade}'?\n\n"
             "Esta ação não pode ser desfeita.",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         
-        if resposta == QMessageBox.Yes:
+        if resposta == QMessageBox.StandardButton.Yes:
             del self.curvas_usuario[cidade]
             del self.curvas[cidade]
             
@@ -516,7 +516,7 @@ class IDFDialog(QDialog):
                     self.tblIntensidades.setItem(i, j + 1, QTableWidgetItem(f"{I:.1f}"))
                     
             # Ajustar colunas
-            self.tblIntensidades.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            self.tblIntensidades.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
             
         except Exception as e:
             QMessageBox.warning(
@@ -615,7 +615,7 @@ class IDFDialog(QDialog):
             for col_idx, cell_data in enumerate(row_data):
                 self.tblIntensidades.setItem(row_idx, col_idx, QTableWidgetItem(cell_data))
         
-        self.tblIntensidades.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tblIntensidades.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
     
     def closeEvent(self, event):
         """Salva estado ao fechar o dialog"""

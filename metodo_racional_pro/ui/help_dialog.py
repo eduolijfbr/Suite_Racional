@@ -41,7 +41,7 @@ class HelpDialog(QDialog):
         
         # Título
         titulo = QLabel("📚 Manual do Usuário - Método Racional Pro")
-        titulo.setFont(QFont("Arial", 14, QFont.Bold))
+        titulo.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         titulo.setStyleSheet("color: #1565C0; padding: 10px;")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(titulo)

@@ -282,9 +282,9 @@ class Medir3DPlugin:
         
         reply = QMessageBox.question(None, 'Confirmar Exclusão', 
                                     f"Tem certeza que deseja excluir permanentemente o registro:\n'{projeto_nome}'?\n\nIsso removerá os dados do banco, o perfil e as camadas do mapa.",
-                                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-
-        if reply == QMessageBox.No:
+                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        
+        if reply == QMessageBox.StandardButton.No:
             return
 
         db_path = os.path.join(self.plugin_dir, "medir_3d_db.gpkg")

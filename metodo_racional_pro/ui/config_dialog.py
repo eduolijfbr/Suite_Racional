@@ -113,7 +113,7 @@ class ConfigDialog(QDialog):
         self.tblProjetos.setHorizontalHeaderLabels(
             ["ID", "Nome", "Data", "TR", "Vazão (m³/s)"]
         )
-        self.tblProjetos.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tblProjetos.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         proj_layout.addWidget(self.tblProjetos)
         
         btn_proj_layout = QHBoxLayout()
@@ -280,8 +280,8 @@ class ConfigDialog(QDialog):
             self,
             "Confirmar",
             "Deseja realmente excluir este projeto?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         
-        if resposta == QMessageBox.Yes:
+        if resposta == QMessageBox.StandardButton.Yes:
             self.tblProjetos.removeRow(row)
