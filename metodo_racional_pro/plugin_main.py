@@ -183,22 +183,22 @@ class MetodoRacionalPro:
         """Abre gerenciador de curvas IDF"""
         from .ui.idf_dialog import IDFDialog
         dlg = IDFDialog(self.iface.mainWindow())
-        dlg.exec_()
+        dlg.exec()
         
     def abrir_banco_dados(self):
         """Abre gerenciador de banco de dados"""
         from .ui.config_dialog import ConfigDialog
         dlg = ConfigDialog(self.iface.mainWindow())
-        dlg.exec_()
+        dlg.exec()
         
     def abrir_ajuda(self):
         """Abre janela de ajuda do plugin"""
         from .ui.help_dialog import HelpDialog
         dlg = HelpDialog(self.iface.mainWindow())
-        dlg.exec_()
+        dlg.exec()
         
     def abrir_analise_impermeabilidade(self):
         """Abre ferramenta de análise de impermeabilidade"""
         from .ui.impermeabilidade_dialog import ImpermeabilidadeDialog
         dlg = ImpermeabilidadeDialog(self.iface, self.iface.mainWindow())
-        dlg.exec_()
+        dlg.exec()

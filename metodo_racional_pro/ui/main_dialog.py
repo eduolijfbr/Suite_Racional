@@ -140,7 +140,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
         msg.setText(texto)
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.setWindowFlags(msg.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
-        msg.exec_()
+        msg.exec()
         
     def setup_ui(self):
         """Configura a interface gráfica"""
@@ -1492,7 +1492,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
             return
             
         dialog = DetalhesImpermeabilidadeDialog(self.resultados['impermeabilidade_dados'], self)
-        dialog.exec_()
+        dialog.exec()
 
     def obter_geometria_area(self, layer):
         """
@@ -2226,7 +2226,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
             )
             
             # Se o usuário confirmar, usar o tempo calculado
-            if dlg.exec_():
+            if dlg.exec():
                 tempo = dlg.get_tempo()
                 if tempo:
                     self.txtTempo.setText(f"{tempo:.2f}")
@@ -2297,7 +2297,7 @@ class MetodoRacionalDialog(QtWidgets.QDockWidget):
             )
             
             # Se o usuário confirmar, usar a intensidade calculada
-            if dlg.exec_():
+            if dlg.exec():
                 intensidade = dlg.get_intensidade()
                 if intensidade:
                     self.txtIntensidade.setText(f"{intensidade:.2f}")

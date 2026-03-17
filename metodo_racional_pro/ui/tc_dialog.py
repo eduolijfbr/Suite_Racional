@@ -8,7 +8,7 @@ from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QLineEdit, QPushButton, QComboBox, QGroupBox,
     QDoubleSpinBox, QTableWidget, QTableWidgetItem,
-    QMessageBox, QHeaderView
+    QMessageBox, QHeaderView, QAbstractItemView
 )
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QDoubleValidator, QFont
@@ -172,7 +172,7 @@ class TcDialog(QDialog):
         
         self.tblComparacao = QTableWidget()
         self.tblComparacao.setMaximumHeight(150)
-        self.tblComparacao.setSelectionMode(QTableWidget.SingleSelection)
+        self.tblComparacao.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tblComparacao.cellClicked.connect(self.ao_clicar_celula)
         tabela_layout.addWidget(self.tblComparacao)
         
