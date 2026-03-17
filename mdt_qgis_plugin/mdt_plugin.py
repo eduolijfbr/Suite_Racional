@@ -6,6 +6,7 @@ Generates MDT/MDS from contour line layers using GDAL Grid (Delaunay TIN).
 import os
 import time
 import traceback
+import importlib
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QIcon
@@ -302,6 +303,14 @@ class MDTPluginDialog(QDockWidget):
             # ---- Step 4: Run algorithm (GDAL Grid) ----
             self._update_progress(35, "Iniciando interpolação GDAL...")
             t_grid_start = time.time()
+
+            # Force reload of mdt_algorithm to avoid QGIS caching issues
+            try:
+                from . import mdt_algorithm
+                importlib.reload(mdt_algorithm)
+                from .mdt_algorithm import MDTAlgorithm
+            except Exception as re:
+                log(f"Aviso: Falha ao recarregar mdt_algorithm: {re}")
 
             algo = MDTAlgorithm()
             result = algo.process(

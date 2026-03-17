@@ -62,16 +62,17 @@ class MDTAlgorithm:
                     "São necessários pelo menos 3 pontos para triangulação."
                 )
 
-            # Filtering duplicates and adding tiny jitter (crucial for Delaunay stability)
-            # Jitter of 0.1mm prevents perfectly collinear points from causing triangulation failure
+            # Filtering duplicates and adding jitter (crucial for Delaunay stability)
+            # Jitter of 5mm prevents perfectly collinear points from causing triangulation failure
             unique_points = {}
             for x, y, z in points_xyz:
-                # Add tiny random jitter (1e-4 meters = 0.1mm)
-                xj = x + (random.random() - 0.5) * 0.0002
-                yj = y + (random.random() - 0.5) * 0.0002
+                # Add tiny random jitter (1e-3 meters = 1mm to 1cm range)
+                # Using 0.005 range = 5mm
+                xj = x + (random.random() - 0.5) * 0.010
+                yj = y + (random.random() - 0.5) * 0.010
                 
-                # Key with 3 decimal places to avoid precision issues
-                key = (round(xj, 3), round(yj, 3))
+                # Higher precision key to avoid merging jittered points
+                key = (round(xj, 5), round(yj, 5))
                 if key not in unique_points:
                     unique_points[key] = z
             
@@ -199,7 +200,8 @@ class MDTAlgorithm:
 
             if result_ds is None:
                 gdal_err = gdal.GetLastErrorMsg()
-                raise Exception(f"Falha na geração do MDT (Linear e IDW): {gdal_err or 'Erro desconhecido GDAL'}")
+                # A very distinct message so we know it's THIS version of the code
+                raise Exception(f"ERRO_GERACAO_MDT_FINAL (Linear+IDW): {gdal_err or 'Erro desconhecido GDAL'}")
 
             # Finalize metadata
             band = result_ds.GetRasterBand(1)
