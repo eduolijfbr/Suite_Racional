@@ -33,9 +33,21 @@ class TcDialog(QDialog):
             'formula': 'Tc = 57 × (L³/H)^0.385',
             'requer': ['distancia', 'desnivel']
         },
+        'california': {
+            'nome': 'California Culverts',
+            'descricao': 'Bacias pequenas e íngremes',
+            'formula': 'Tc = (11.9 × L³/H)^0.385',
+            'requer': ['distancia', 'desnivel']
+        },
+        'dooge': {
+            'nome': 'Dooge',
+            'descricao': 'Bacias naturais',
+            'formula': 'Tc = 0.365 × (A^0.41) × (L^-0.17)',
+            'requer': ['area', 'distancia']
+        },
         'giandotti': {
             'nome': 'Giandotti',
-            'descricao': 'Urbano e rural (recomendado Brasil)',
+            'descricao': 'Urbano e rural (Brasil)',
             'formula': 'Tc = (4√A + 1.5L) / (0.8√H)',
             'requer': ['distancia', 'desnivel', 'area']
         },
@@ -47,9 +59,15 @@ class TcDialog(QDialog):
         },
         'bransby_williams': {
             'nome': 'Bransby-Williams',
-            'descricao': 'Conservador / cenários críticos',
+            'descricao': 'Critérios conservadores',
             'formula': 'Tc = 14.6 × L / (A^0.1 × S^0.2)',
             'requer': ['distancia', 'area', 'declividade']
+        },
+        'scs': {
+            'nome': 'SCS Lag',
+            'descricao': 'Uso do solo (CN)',
+            'formula': 'Tc = Lag / 0.6',
+            'requer': ['distancia', 'cn', 'declividade']
         }
     }
     
@@ -66,6 +84,10 @@ class TcDialog(QDialog):
         
         self.setup_ui()
         self.carregar_valores_iniciais()
+        
+        # Realizar cálculo inicial automático se houver dados
+        self.calcular_tc(silencioso=True)
+        self.gerar_tabela_comparativa()
         
     def setup_ui(self):
         """Configura interface"""
@@ -105,6 +127,14 @@ class TcDialog(QDialog):
         self.txtDeclividade.setValidator(QDoubleValidator(0, 100, 4))
         self.txtDeclividade.setToolTip("Declividade média da bacia em %")
         grid_params.addWidget(self.txtDeclividade, 3, 1)
+        
+        # Curva Número (CN)
+        grid_params.addWidget(QLabel("CN (0-100):"), 4, 0)
+        self.txtCN = QLineEdit()
+        self.txtCN.setValidator(QDoubleValidator(0, 100, 2))
+        self.txtCN.setToolTip("Curva Número (SCS Curve Number) para o método SCS")
+        self.txtCN.setText("75.0") # Valor padrão comum
+        grid_params.addWidget(self.txtCN, 4, 1)
         
         layout.addWidget(grp_params)
         
@@ -173,6 +203,9 @@ class TcDialog(QDialog):
         self.tblComparacao = QTableWidget()
         self.tblComparacao.setMaximumHeight(150)
         self.tblComparacao.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.tblComparacao.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectColumns)
+        self.tblComparacao.verticalHeader().setVisible(False)
+        self.tblComparacao.horizontalHeader().setVisible(True)
         self.tblComparacao.cellClicked.connect(self.ao_clicar_celula)
         tabela_layout.addWidget(self.tblComparacao)
         
@@ -206,19 +239,25 @@ class TcDialog(QDialog):
         
         layout.addLayout(btn_layout)
         
+        # Selecionar Giandotti como padrão (comum no Brasil)
+        index = self.cmbMetodo.findData('giandotti')
+        if index >= 0:
+            self.cmbMetodo.setCurrentIndex(index)
+            
         # Atualizar info inicial
         self.atualizar_info_metodo()
         
     def carregar_valores_iniciais(self):
-        """Carrega valores iniciais nos campos"""
-        if self.distancia_inicial:
-            self.txtDistancia.setText(str(self.distancia_inicial))
-        if self.desnivel_inicial:
-            self.txtDesnivel.setText(str(self.desnivel_inicial))
-        if self.area_inicial:
-            self.txtArea.setText(str(self.area_inicial))
-        if self.declividade_inicial:
-            self.txtDeclividade.setText(str(self.declividade_inicial))
+        """Carrega valores iniciais nos campos formatados"""
+        if self.distancia_inicial is not None:
+            # Formatar para evitar notação científica (ex: 62900.00)
+            self.txtDistancia.setText(f"{float(self.distancia_inicial):.2f}")
+        if self.desnivel_inicial is not None:
+            self.txtDesnivel.setText(f"{float(self.desnivel_inicial):.2f}")
+        if self.area_inicial is not None:
+            self.txtArea.setText(f"{float(self.area_inicial):.6f}")
+        if self.declividade_inicial is not None:
+            self.txtDeclividade.setText(f"{float(self.declividade_inicial):.4f}")
             
     def atualizar_info_metodo(self):
         """Atualiza informações do método selecionado"""
@@ -233,25 +272,31 @@ class TcDialog(QDialog):
         
         try:
             if self.txtDistancia.text():
-                valores['distancia'] = float(self.txtDistancia.text())
+                valores['distancia'] = float(self.txtDistancia.text().replace(',', '.'))
         except ValueError:
             pass
             
         try:
             if self.txtDesnivel.text():
-                valores['desnivel'] = float(self.txtDesnivel.text())
+                valores['desnivel'] = float(self.txtDesnivel.text().replace(',', '.'))
         except ValueError:
             pass
             
         try:
             if self.txtArea.text():
-                valores['area'] = float(self.txtArea.text())
+                valores['area'] = float(self.txtArea.text().replace(',', '.'))
         except ValueError:
             pass
             
         try:
             if self.txtDeclividade.text():
-                valores['declividade'] = float(self.txtDeclividade.text())
+                valores['declividade'] = float(self.txtDeclividade.text().replace(',', '.'))
+        except ValueError:
+            pass
+            
+        try:
+            if self.txtCN.text():
+                valores['cn'] = float(self.txtCN.text().replace(',', '.'))
         except ValueError:
             pass
             
@@ -274,7 +319,7 @@ class TcDialog(QDialog):
             
         return True, ""
         
-    def calcular_tc(self):
+    def calcular_tc(self, silencioso=False):
         """Calcula tempo de concentração pelo método selecionado"""
         metodo_key = self.cmbMetodo.currentData()
         valores = self.obter_valores()
@@ -282,7 +327,8 @@ class TcDialog(QDialog):
         # Validar
         valido, msg = self.validar_metodo(metodo_key, valores)
         if not valido:
-            QMessageBox.warning(self, "Atenção", msg)
+            if not silencioso:
+                QMessageBox.warning(self, "Atenção", msg)
             return
             
         try:
@@ -292,6 +338,16 @@ class TcDialog(QDialog):
                 tc = TempoConcentracao.kirpich(
                     valores['distancia'], 
                     valores['desnivel']
+                )
+            elif metodo_key == 'california':
+                tc = TempoConcentracao.california_culverts(
+                    valores['distancia'], 
+                    valores['desnivel']
+                )
+            elif metodo_key == 'dooge':
+                tc = TempoConcentracao.dooge(
+                    valores['area'],
+                    valores['distancia'] / 1000.0 # m to km
                 )
             elif metodo_key == 'giandotti':
                 tc = TempoConcentracao.giandotti(
@@ -308,6 +364,12 @@ class TcDialog(QDialog):
                 tc = TempoConcentracao.bransby_williams(
                     valores['area'],
                     valores['distancia'],
+                    valores['declividade']
+                )
+            elif metodo_key == 'scs':
+                tc = TempoConcentracao.scs_lag(
+                    valores['distancia'],
+                    valores['cn'],
                     valores['declividade']
                 )
                 
@@ -347,12 +409,18 @@ class TcDialog(QDialog):
                 try:
                     if key == 'kirpich':
                         tc = TempoConcentracao.kirpich(valores['distancia'], valores['desnivel'])
+                    elif key == 'california':
+                        tc = TempoConcentracao.california_culverts(valores['distancia'], valores['desnivel'])
+                    elif key == 'dooge':
+                        tc = TempoConcentracao.dooge(valores['area'], valores['distancia'] / 1000.0)
                     elif key == 'giandotti':
                         tc = TempoConcentracao.giandotti(valores['area'], valores['distancia'], valores['desnivel'])
                     elif key == 'ventura':
                         tc = TempoConcentracao.ventura(valores['area'], valores['declividade'])
                     elif key == 'bransby_williams':
                         tc = TempoConcentracao.bransby_williams(valores['area'], valores['distancia'], valores['declividade'])
+                    elif key == 'scs':
+                        tc = TempoConcentracao.scs_lag(valores['distancia'], valores['cn'], valores['declividade'])
                     else:
                         continue
                         
