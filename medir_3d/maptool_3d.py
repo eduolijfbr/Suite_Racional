@@ -264,22 +264,37 @@ class MapTool3D(QgsMapToolEmitPoint):
                     # Nos demais, começamos na cota de chegada do anterior (ou degrau se necessário)
                     cf_start = cf_in_max
                 
-                # NOVO ALGORITMO: Declividade Dinâmica (Follow Terrain)
-                # O objetivo é encontrar a menor declividade >= slope_pct que mantém a cobertura
-                req_slope = slope_pct
-                d_check = 0.0
-                while d_check <= L_teste + 0.001:
-                    if d_check > 0:
-                        z_t = get_z_terr(d_atual + d_check)
-                        # Declividade necessária para não ficar com cobertura rasa neste ponto
-                        s = (cf_start - (z_t - COB_MIN)) / d_check
-                        if s > req_slope:
-                            req_slope = s
-                    d_check += PASSO
+                # NOVO ALGORITMO ROBUSTO:
+                # 1. Calcula inclinação base para chegar no FINAL do trecho respeitando a cobertura
+                z_fim = get_z_terr(d_atual + L_teste)
+                slope_base = (cf_start - (z_fim - COB_MIN)) / L_teste
+                
+                req_slope = max(slope_pct, slope_base)
+                
+                # 2. Verificação de "Afloramento" em pontos intermediários
+                # Aumentamos a inclinação apenas se o cano ficar raso demais no caminho, 
+                # mas ignoramos "buracos" (ruídos) no MDT.
+                d_check = 1.0 # Pula o início imediato
+                while d_check < L_teste:
+                    z_t = get_z_terr(d_atual + d_check)
+                    # Se o terreno subiu muito no meio, o cano pode aflorar se mantivermos a slope_base
+                    # s_check é a declividade necessária para não aflorar neste ponto específico
+                    s_check = (cf_start - (z_t - COB_MIN)) / d_check
+                    
+                    if s_check > req_slope:
+                        # Só aumentamos se o terreno de fato estiver impedindo a passagem (subida no meio)
+                        # e se não for um valor absurdo que sugira ruído (limitamos a 30% p/ evitar bugs de MDT)
+                        if s_check < 0.3: 
+                            req_slope = s_check
+                    d_check += PASSO * 2 # Passo maior para estabilidade
                 
                 # Qual será a profundidade real deste PV se usarmos este cf_start e req_slope?
                 z_atual = get_z_terr(d_atual)
                 prof_start = z_atual - cf_start
+                
+                # Se estiver subindo o morro, avisa no log
+                if slope_base < 0:
+                     self.measurement_done.emit("Alerta: Terreno em subida. Profundidade aumentará.")
                 
                 # Se a profundidade for tolerável, achamos o trecho
                 if prof_start <= PROF_MAX:
@@ -477,36 +492,39 @@ class MapTool3D(QgsMapToolEmitPoint):
                        [pv["z_terr"], min_cf], 
                        color='#333333', linewidth=1.5, linestyle='--', alpha=0.7)
                 
-                # Intercalador dinâmico avançado (3 níveis)
-                nivel = i % 3
-                offset_y = 15 + (nivel * 35)
+                # Intercalador dinâmico avançado (4 níveis com maior distanciamento)
+                nivel = i % 4
+                offset_y = 20 + (nivel * 45)
                 
                 # Cor do card condicional (Atenção se prof > 4.5m)
-                cor_card = '#FFE4B5' if pv["profund"] < 4.5 else '#FFA07A'
+                cor_card = '#FFE4B5' if pv["profund"] < 4.5 else '#FF7F50'
                 
-                ax.annotate(f'PV{i+1}\nProf: {pv["profund"]:.2f}m\nCob Ent: {pv["cob_entrada"]:.2f}m | Sai: {pv["cob_saida"]:.2f}m', 
+                ax.annotate(f'PV{i+1}\nProf: {pv["profund"]:.2f}m\nCob Ent: {pv["cob_entrada"]:.2f}m', 
                            xy=(pv["dist_acum"], pv["z_terr"]), 
                            xytext=(0, offset_y), textcoords='offset points',
-                           ha='center', va='bottom', fontsize=8,
-                           bbox=dict(boxstyle='round,pad=0.3', facecolor=cor_card, edgecolor='#666666', alpha=0.9),
-                           arrowprops=dict(arrowstyle="-", color='#666666', alpha=0.5))
+                           ha='center', va='bottom', fontsize=9, fontweight='medium',
+                           bbox=dict(boxstyle='round,pad=0.4', facecolor=cor_card, edgecolor='#444444', alpha=0.95),
+                           arrowprops=dict(arrowstyle="->", color='#444444', alpha=0.6, lw=1.2))
             
-            # Distâncias entre PVs (setas com texto)
+            # Distâncias entre PVs (setas com texto) com correção de overlap
             for i in range(1, len(self.last_pvs)):
-                d1 = self.last_pvs[i-1]["dist_acum"]
-                d2 = self.last_pvs[i]["dist_acum"]
+                p1, p2 = self.last_pvs[i-1], self.last_pvs[i]
+                d1, d2 = p1["dist_acum"], p2["dist_acum"]
                 d_meio = (d1 + d2) / 2
-                # Ponto médio da cota para posicionar o texto da distância
-                z_m1 = self.last_pvs[i-1]["cf_saida"]
-                z_m2 = self.last_pvs[i]["cf_entrada"]
-                z_meio_v = (z_m1 + z_m2) / 2
+                
+                # Ponto médio da cota
+                z_meio_v = (p1["cf_saida"] + p2["cf_entrada"]) / 2
                 
                 dist_entre = d2 - d1
-                ax.annotate('', xy=(d2, z_meio_v - 0.5), xytext=(d1, z_meio_v - 0.5),
-                           arrowprops=dict(arrowstyle='<->', color='#2E8B57', lw=1.2, alpha=0.7))
-                ax.text(d_meio, z_meio_v - 1.2, f'{dist_entre:.1f}m',
-                       ha='center', va='top', fontsize=8, color='#006400',
-                       bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor='none', alpha=0.8))
+                incl_texto = p1["incl_aplicada"]
+                
+                # Linha de cota e texto
+                ax.annotate('', xy=(d2, z_meio_v - 0.3), xytext=(d1, z_meio_v - 0.3),
+                           arrowprops=dict(arrowstyle='<->', color='#2E8B57', lw=1.5, alpha=0.8))
+                
+                ax.text(d_meio, z_meio_v - 0.6, f'{dist_entre:.1f}m ({incl_texto:.1f}%)',
+                       ha='center', va='top', fontsize=8, color='#004d00', fontweight='bold',
+                       bbox=dict(boxstyle='square,pad=0.1', facecolor='white', edgecolor='none', alpha=0.7))
             
             ax.set_xlabel('Estaqueamento (m)', fontsize=12, fontweight='bold', color='#333333')
             ax.set_ylabel('Cota (m)', fontsize=12, fontweight='bold', color='#333333')
@@ -514,9 +532,13 @@ class MapTool3D(QgsMapToolEmitPoint):
                          fontsize=14, fontweight='bold', color='#1a1a1a', pad=20)
             
             # Estilização das legendas e grid
-            ax.legend(loc='upper right', frameon=True, fancybox=True, framealpha=0.9, shadow=True, borderpad=1)
+            ax.legend(loc='upper left', frameon=True, fancybox=True, framealpha=0.9, shadow=True, borderpad=1)
             ax.grid(True, linestyle=':', alpha=0.6, color='#999999')
-            ax.set_xlim(0 - (dist_terr[-1]*0.02), dist_terr[-1] * 1.02) # Leve margem nas bordas
+            ax.set_xlim(0 - (dist_terr[-1]*0.05), dist_terr[-1] * 1.05) # Margem maior
+            
+            # Garante espaço para os labels superiores (offset_y alto)
+            ylim = ax.get_ylim()
+            ax.set_ylim(ylim[0], ylim[1] + (ylim[1]-ylim[0])*0.3)
             
             plt.tight_layout()
             
