@@ -10,7 +10,9 @@ from qgis.core import (
     QgsFeature,
     QgsGeometry,
     QgsField,
-    QgsWkbTypes
+    QgsWkbTypes,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform
 )
 from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand
 from qgis.PyQt.QtCore import Qt, pyqtSignal, QVariant
@@ -49,11 +51,25 @@ class MapTool3D(QgsMapToolEmitPoint):
         super().deactivate()
 
     def get_z_at_point(self, point, raster_layer):
-        ident = raster_layer.dataProvider().identify(point, QgsRaster.IdentifyFormatValue)
-        if ident.isValid() and ident.results():
-            val = list(ident.results().values())[0]
-            if val is not None:
-                return float(val)
+        try:
+            # Transforma ponto para o CRS da camada raster
+            canvas_crs = self.canvas.mapSettings().destinationCrs()
+            raster_crs = raster_layer.crs()
+            
+            if canvas_crs != raster_crs:
+                transform = QgsCoordinateTransform(canvas_crs, raster_crs, QgsProject.instance())
+                pt_trans = transform.transform(point)
+            else:
+                pt_trans = point
+
+            ident = raster_layer.dataProvider().identify(pt_trans, QgsRaster.IdentifyFormatValue)
+            if ident.isValid() and ident.results():
+                # Tenta pegar o primeiro valor não-nulo
+                for val in ident.results().values():
+                    if val is not None:
+                        return float(val)
+        except Exception as e:
+            QgsMessageLog.logMessage(f"Erro ao obter Z: {str(e)}", "Medir 3D", Qgis.Warning)
         return 0.0
 
     def canvasReleaseEvent(self, event):
@@ -241,47 +257,42 @@ class MapTool3D(QgsMapToolEmitPoint):
             L_teste = L_max_teste
             
             while L_teste >= L_min_teste:
-                # Cota necessária no começo deste L_teste para que o tubo 
-                # NUNCA fique com cobertura < COB_MIN
-                cf_req = float('inf')
-                d_check = 0.0
+                # Se for o primeiro PV, começamos na profundidade mínima
+                if d_atual == 0:
+                    cf_start = get_z_terr(0) - COB_MIN
+                else:
+                    # Nos demais, começamos na cota de chegada do anterior (ou degrau se necessário)
+                    cf_start = cf_in_max
                 
+                # NOVO ALGORITMO: Declividade Dinâmica (Follow Terrain)
+                # O objetivo é encontrar a menor declividade >= slope_pct que mantém a cobertura
+                req_slope = slope_pct
+                d_check = 0.0
                 while d_check <= L_teste + 0.001:
-                    d_global = d_atual + d_check
-                    z_terr = get_z_terr(d_global)
-                    
-                    limit = z_terr - COB_MIN + (d_check * slope_pct)
-                    if limit < cf_req:
-                        cf_req = limit
-                        
+                    if d_check > 0:
+                        z_t = get_z_terr(d_atual + d_check)
+                        # Declividade necessária para não ficar com cobertura rasa neste ponto
+                        s = (cf_start - (z_t - COB_MIN)) / d_check
+                        if s > req_slope:
+                            req_slope = s
                     d_check += PASSO
                 
-                # cf_req é a cota de saída estritamente necessária por conta da topografia à frente.
-                # A gravidade impede que o tubo DO NOVO TRECHO inicie
-                # acima da cota do tubo DO TRECHO ANTERIOR chegando no PV.
-                cf_out = min(cf_req, cf_in_max)
-                
-                # Se o terreno permite subir o tubo (topografia favorável),
-                # garantimos que ele não fique mais fundo do que o necessário no início.
-                cf_out_ideal = get_z_terr(d_atual) - COB_MIN
-                # O tubo pode subir até cf_out_ideal, desde que não suba acima da cota de chegada (cf_in_max)
-                # E não suba acima do que a topografia à frente exige (cf_req)
-                if cf_out < cf_out_ideal and cf_out_ideal <= cf_in_max and cf_out_ideal <= cf_req:
-                     cf_out = cf_out_ideal
-                
-                # Qual será a profundidade real deste PV se usarmos cf_out?
+                # Qual será a profundidade real deste PV se usarmos este cf_start e req_slope?
                 z_atual = get_z_terr(d_atual)
-                prof_start = z_atual - cf_out
+                prof_start = z_atual - cf_start
                 
-                # Se a profundidade for tolerável, ótimo, achei a maior distância!
+                # Se a profundidade for tolerável, achamos o trecho
                 if prof_start <= PROF_MAX:
                     melhor_L = L_teste
-                    melhor_cf_out = cf_out
+                    melhor_cf_out = cf_start
+                    melhor_slope = req_slope
                     break
                 
+                # Se ainda estiver muito profundo, tentamos encurtar o trecho para ver se melhora
                 melhor_L = L_teste
-                melhor_cf_out = cf_out
-                L_teste -= 1.0
+                melhor_cf_out = cf_start
+                melhor_slope = req_slope
+                L_teste -= 5.0  # Redução mais agressiva para performance
                 
             # Adicionar o PV a montante
             z_atual = get_z_terr(d_atual)
@@ -309,11 +320,11 @@ class MapTool3D(QgsMapToolEmitPoint):
                 "cob_saida": cob_out,
                 "dist_acum": d_atual,
                 "dist_parcial": melhor_L if d_atual > 0 else 0.0,
-                "incl_aplicada": slope_pct * 100
+                "incl_aplicada": melhor_slope * 100
             })
             
-            # Atualiza qual a cota que este tubo vai CHEGAR no próximo PV
-            cf_in_max = melhor_cf_out - (melhor_L * slope_pct)
+            # Atualiza qual a cota que este tubo vai CHEGAR no próximo PV usando a declividade real calculada
+            cf_in_max = melhor_cf_out - (melhor_L * melhor_slope)
             d_atual += melhor_L
             
             # Se chegou perto o suficiente do final, força o fechamento do PV final

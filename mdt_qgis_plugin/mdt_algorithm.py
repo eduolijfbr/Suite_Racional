@@ -32,7 +32,7 @@ class MDTAlgorithm:
     def process(self, points_xyz, extent, resolution, output_path, crs_wkt, progress_fn=None):
         """
         Main processing function.
-
+        
         Args:
             points_xyz: list of (x, y, z) tuples (pure Python)
             extent: tuple (xmin, ymin, xmax, ymax)
@@ -45,6 +45,9 @@ class MDTAlgorithm:
         Raises:
             Exception with detailed message on failure
         """
+        # DEBUG: Verify point count
+        print(f">>> MDT_ALGORITHM_V3_PROCESS: {len(points_xyz)} pts")
+        self.log(f"Processando {len(points_xyz)} pontos com resolução de {resolution}m")
         tmp_shp = None
         tmp_files = []
         mem_ds = None
@@ -63,16 +66,15 @@ class MDTAlgorithm:
                 )
 
             # Filtering duplicates and adding jitter (crucial for Delaunay stability)
-            # Jitter of 5mm prevents perfectly collinear points from causing triangulation failure
+            # Jitter of 1cm prevents perfectly collinear points from causing triangulation failure
             unique_points = {}
             for x, y, z in points_xyz:
-                # Add tiny random jitter (1e-3 meters = 1mm to 1cm range)
-                # Using 0.005 range = 5mm
-                xj = x + (random.random() - 0.5) * 0.010
-                yj = y + (random.random() - 0.5) * 0.010
+                # Add random jitter (5mm range to avoid overlapping)
+                xj = x + (random.random() - 0.5) * 0.01
+                yj = y + (random.random() - 0.5) * 0.01
                 
                 # Higher precision key to avoid merging jittered points
-                key = (round(xj, 5), round(yj, 5))
+                key = (round(xj, 6), round(yj, 6))
                 if key not in unique_points:
                     unique_points[key] = z
             
@@ -154,10 +156,11 @@ class MDTAlgorithm:
                 progress_fn(40, "Interpolando TIN (GDAL Grid)... Aguarde.")
 
             # Linear algorithm = Delaunay Triangulation
+            # Using only 'linear' without radius=-1 if it fails, or try simple parameters
             grid_options = gdal.GridOptions(
                 format="GTiff",
                 outputType=gdal.GDT_Float32,
-                algorithm="linear:radius=-1:nodata=-9999",
+                algorithm="linear:nodata=-9999", # Removing radius=-1 for better stability
                 zfield="Z",
                 width=width,
                 height=height,

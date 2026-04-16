@@ -152,6 +152,20 @@ class MDTPluginDialog(QDockWidget):
         QgsApplication.processEvents()
 
     def run_process(self):
+        # DEBUG: Verify which version of the plugin is running
+        print(">>> MDT_PLUGIN_V3_RUNNING")
+        log(">>> MDT_PLUGIN_V3_RUNNING")
+        
+        # Force reload of mdt_algorithm to avoid QGIS caching issues
+        try:
+            from . import mdt_algorithm
+            importlib.reload(mdt_algorithm)
+            from .mdt_algorithm import MDTAlgorithm
+            print(">>> MDT_ALGORITHM_RELOADED_V3")
+        except Exception as re:
+            log(f"Aviso: Falha ao recarregar mdt_algorithm: {re}")
+            print(f">>> MDT_RELOAD_FAILED: {re}")
+
         # Define progress function for use in extraction loops
         progress_fn = self._update_progress
         
@@ -205,8 +219,9 @@ class MDTPluginDialog(QDockWidget):
             request = QgsFeatureRequest()
             request.setFilterRect(filter_rect)
 
-            # Adaptive densification: proportional to resolution (min 0.5m)
-            densify_dist = max(resolution * 0.5, 0.5)
+            # Adaptive densification: proportional to resolution (min 1.0m for stability)
+            # 2x resolution is usually enough for linear TIN interpolation
+            densify_dist = max(resolution * 2.0, 1.0)
 
             total = layer.featureCount()
             points_xyz = []

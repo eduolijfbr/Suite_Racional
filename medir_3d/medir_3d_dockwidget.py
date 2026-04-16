@@ -34,7 +34,7 @@ class Medir3DDockWidget(QDockWidget):
         
         # Manhole (PV) features
         pv_layout = QHBoxLayout()
-        pv_layout.addWidget(QLabel("Declive(%):"))
+        pv_layout.addWidget(QLabel("Declive Mín(%):"))
         self.input_inclinacao = QLineEdit("1.0")
         pv_layout.addWidget(self.input_inclinacao)
         
