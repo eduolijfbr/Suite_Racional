@@ -201,28 +201,19 @@ class MapTool3D(QgsMapToolEmitPoint):
 
     def calcular_pvs_dinamicos(self, original_points, raster_layer, slope_pct, dist_max_seguranca, diam_mm):
         """
-        Algoritmo de lançamento de PVs para rede de saneamento baseado em 
-        regras de engenharia (Maximização de Distância com Limite de Profundidade):
-        
-        REGRAS:
-        1. PV1 no início: profundidade mínima de 2m.
-        2. Tenta lançar o próximo PV na Maior Distância Permitida (dist_max_seguranca).
-        3. Verifica se a Profundidade do PV e a cobertura do tubo ao longo
-           deste trecho não excedem limites.
-        4. O Tubo DEVE ter pelo menos 2m de cobertura em todos os pontos do trecho.
-        5. A prof. inicial do trecho deve ser a mínima necessária para garantir (4).
-        6. Se a prof. num trecho ficar muito alta (> PROF_MAX), 
-           a distância do trecho é reduzida até um mínimo aceitável (10m).
-        7. Distâncias são puramente ditadas pela topografia, inclinação e PROF_MAX.
+        Algoritmo de lançamento de PVs para rede de saneamento.
+        Garante que a declividade da rede não ultrapasse a declividade solicitada,
+        criando degraus (tubos de queda) nos PVs quando o terreno cair abruptamente.
+        A distância máxima entre PVs é respeitada, e se for necessária uma profundidade
+        maior que o limite, a distância entre PVs é encurtada.
         """
-        # Fórmula Técnica: Cobertura(1.5*D) + Diâmetro(D) + Berço(0.20) = 2.5*D + 0.20
         depth_total_req = (2.5 * (diam_mm / 1000.0)) + 0.20
-        COB_MIN = depth_total_req     # No código, COB_MIN representa a profundidade total da vala
-        PROF_MAX = 5.0        # Profundidade máxima desejável para um PV
-        DIST_MAX = max(10.0, dist_max_seguranca) # Distância MÁXIMA entre PVs
-        DIST_MIN = 10.0       # Distância MÍNIMA entre PVs (evitar PVs colados)
+        COB_MIN = depth_total_req
+        PROF_MAX = 5.0
+        DIST_MAX = max(10.0, dist_max_seguranca)
+        DIST_MIN = 10.0
         if DIST_MAX < DIST_MIN: DIST_MAX = DIST_MIN
-        PASSO = 1.0           # Resolução de amostragem no terreno
+        PASSO = 1.0
 
         linha = QgsGeometry.fromPolylineXY(original_points)
         compr_total = linha.length()
@@ -230,7 +221,6 @@ class MapTool3D(QgsMapToolEmitPoint):
         if compr_total < 1.0:
             return []
 
-        # Amostramos o perfil do terreno ao longo do traçado
         perfil = self.amostrar_perfil_terreno(original_points, raster_layer, PASSO)
         self.last_perfil_terrain = perfil
         
@@ -242,86 +232,72 @@ class MapTool3D(QgsMapToolEmitPoint):
 
         pvs = []
         d_atual = 0.0
-        cf_in_max = float('inf')  # Restrição da cota de chegada do tubo anterior
+        cf_in_max = float('inf')
         
         while d_atual < compr_total:
             restante = compr_total - d_atual
-            
-            # Tentar de DIST_MAX até DIST_MIN no trecho restante
             L_max_teste = min(DIST_MAX, restante)
             L_min_teste = min(DIST_MIN, restante)
             
             melhor_L = L_min_teste
             melhor_cf_out = None
+            melhor_slope = slope_pct
             
             L_teste = L_max_teste
             
             while L_teste >= L_min_teste:
-                # Se for o primeiro PV, começamos na profundidade mínima
                 if d_atual == 0:
-                    cf_start = get_z_terr(0) - COB_MIN
+                    cf_start_base = get_z_terr(0) - COB_MIN
                 else:
-                    # Nos demais, começamos na cota de chegada do anterior (ou degrau se necessário)
-                    cf_start = cf_in_max
+                    cf_start_base = cf_in_max
                 
-                # NOVO ALGORITMO ROBUSTO:
-                # 1. Calcula inclinação base para chegar no FINAL do trecho respeitando a cobertura
-                z_fim = get_z_terr(d_atual + L_teste)
-                slope_base = (cf_start - (z_fim - COB_MIN)) / L_teste
+                req_slope = slope_pct
                 
-                req_slope = max(slope_pct, slope_base)
-                
-                # 2. Verificação de "Afloramento" em pontos intermediários
-                # Aumentamos a inclinação apenas se o cano ficar raso demais no caminho, 
-                # mas ignoramos "buracos" (ruídos) no MDT.
-                d_check = 1.0 # Pula o início imediato
-                while d_check < L_teste:
+                # Verifica afloramento (falta de cobertura) em todos os pontos do trecho
+                max_deficit = 0.0
+                d_check = 0.0
+                while d_check <= L_teste:
                     z_t = get_z_terr(d_atual + d_check)
-                    # Se o terreno subiu muito no meio, o cano pode aflorar se mantivermos a slope_base
-                    # s_check é a declividade necessária para não aflorar neste ponto específico
-                    s_check = (cf_start - (z_t - COB_MIN)) / d_check
+                    cf_t = cf_start_base - (d_check * req_slope)
+                    prof_t = z_t - cf_t
                     
-                    if s_check > req_slope:
-                        # Só aumentamos se o terreno de fato estiver impedindo a passagem (subida no meio)
-                        # e se não for um valor absurdo que sugira ruído (limitamos a 30% p/ evitar bugs de MDT)
-                        if s_check < 0.3: 
-                            req_slope = s_check
-                    d_check += PASSO * 2 # Passo maior para estabilidade
+                    if prof_t < COB_MIN:
+                        deficit = COB_MIN - prof_t
+                        if deficit > max_deficit:
+                            max_deficit = deficit
+                    
+                    d_check += PASSO
                 
-                # Qual será a profundidade real deste PV se usarmos este cf_start e req_slope?
-                z_atual = get_z_terr(d_atual)
-                prof_start = z_atual - cf_start
+                # Ajusta a cota de saída do PV para garantir a cobertura (introduzindo tubo de queda se necessário)
+                cf_start_adj = cf_start_base - max_deficit
                 
-                # Se estiver subindo o morro, avisa no log
-                if slope_base < 0:
-                     self.measurement_done.emit("Alerta: Terreno em subida. Profundidade aumentará.")
+                # Checa a profundidade no início e fim do trecho
+                z_atual_pv = get_z_terr(d_atual)
+                prof_start = z_atual_pv - cf_start_adj
                 
-                # Se a profundidade for tolerável, achamos o trecho
-                if prof_start <= PROF_MAX:
+                z_fim_pv = get_z_terr(d_atual + L_teste)
+                cf_fim_adj = cf_start_adj - (L_teste * req_slope)
+                prof_fim = z_fim_pv - cf_fim_adj
+                
+                # Se profundidades OK ou se não podemos reduzir mais, aceitamos este comprimento
+                if (prof_start <= PROF_MAX and prof_fim <= PROF_MAX) or L_teste == L_min_teste:
                     melhor_L = L_teste
-                    melhor_cf_out = cf_start
+                    melhor_cf_out = cf_start_adj
                     melhor_slope = req_slope
                     break
                 
-                # Se ainda estiver muito profundo, tentamos encurtar o trecho para ver se melhora
-                melhor_L = L_teste
-                melhor_cf_out = cf_start
-                melhor_slope = req_slope
-                L_teste -= 5.0  # Redução mais agressiva para performance
-                
-            # Adicionar o PV a montante
+                # Se muito profundo, reduz a distância entre os PVs e tenta novamente
+                L_teste -= 5.0
+                if L_teste < L_min_teste:
+                    L_teste = L_min_teste
+
             z_atual = get_z_terr(d_atual)
-            
             pt_geom = linha.interpolate(d_atual)
             pt = QgsPointXY(pt_geom.asPoint().x(), pt_geom.asPoint().y())
             
-            # Cota de saída deste PV
             cf_out = melhor_cf_out
-            # Cota de entrada vindo do trecho anterior
-            # No primeiro PV, entrada = saída
             cf_in = cf_in_max if cf_in_max != float('inf') else cf_out
             
-            # Cobertura = Profundidade - Diâmetro - Berço(0.20)
             cob_in = (z_atual - cf_in) - (diam_mm / 1000.0) - 0.20
             cob_out = (z_atual - cf_out) - (diam_mm / 1000.0) - 0.20
 
@@ -338,11 +314,10 @@ class MapTool3D(QgsMapToolEmitPoint):
                 "incl_aplicada": melhor_slope * 100
             })
             
-            # Atualiza qual a cota que este tubo vai CHEGAR no próximo PV usando a declividade real calculada
+            # Cota de chegada do tubo no próximo PV
             cf_in_max = melhor_cf_out - (melhor_L * melhor_slope)
             d_atual += melhor_L
             
-            # Se chegou perto o suficiente do final, força o fechamento do PV final
             if d_atual >= compr_total - 0.001:
                 z_fim = get_z_terr(compr_total)
                 cf_end = cf_in_max
@@ -499,7 +474,10 @@ class MapTool3D(QgsMapToolEmitPoint):
                 # Cor do card condicional (Atenção se prof > 4.5m)
                 cor_card = '#FFE4B5' if pv["profund"] < 4.5 else '#FF7F50'
                 
-                ax.annotate(f'PV{i+1}\nProf: {pv["profund"]:.2f}m\nCob Ent: {pv["cob_entrada"]:.2f}m', 
+                queda = pv["cf_entrada"] - pv["cf_saida"]
+                texto_queda = f'\nQueda: {queda:.2f}m' if queda >= 0.01 else ''
+                
+                ax.annotate(f'PV{i+1}\nProf: {pv["profund"]:.2f}m\nCob Ent: {pv["cob_entrada"]:.2f}m{texto_queda}', 
                            xy=(pv["dist_acum"], pv["z_terr"]), 
                            xytext=(0, offset_y), textcoords='offset points',
                            ha='center', va='bottom', fontsize=9, fontweight='medium',
