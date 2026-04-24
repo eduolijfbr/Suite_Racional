@@ -55,8 +55,11 @@ class Medir3DPlugin:
             self.dockwidget.btn_perfil.clicked.connect(self.ver_perfil)
             self.dockwidget.visibilityChanged.connect(self.dock_visibility_changed)
             self.dockwidget.combo_layer.currentIndexChanged.connect(self.guardar_selecao_camada)
+            self.dockwidget.combo_bacias.currentIndexChanged.connect(self.guardar_selecao_camada)
+            self.dockwidget.combo_vias.currentIndexChanged.connect(self.atualizar_campos_vias)
             self.dockwidget.btn_carregar_historico.clicked.connect(self.carregar_historico)
             self.dockwidget.btn_excluir_historico.clicked.connect(self.excluir_historico)
+            self.dockwidget.btn_calc_sarjeta.clicked.connect(self.calcular_bocas_de_lobo)
             QgsProject.instance().layersAdded.connect(self.atualizar_camadas)
             QgsProject.instance().layersRemoved.connect(self.atualizar_camadas)
             
@@ -416,23 +419,49 @@ class Medir3DPlugin:
         settings = QgsSettings()
         # Salva o nome da camada atualmente selecionada (se houver) antes de limpar
         camada_atual = self.dockwidget.combo_layer.currentText()
-        if not camada_atual:
-            camada_atual = settings.value("Medir3D/lastLayer", "")
+        if not camada_atual: camada_atual = settings.value("Medir3D/lastLayer", "")
+        
+        bacia_atual = self.dockwidget.combo_bacias.currentText()
+        if not bacia_atual: bacia_atual = settings.value("Medir3D/lastBacia", "")
+        
+        vias_atual = self.dockwidget.combo_vias.currentText()
+        if not vias_atual: vias_atual = settings.value("Medir3D/lastVias", "")
 
         self.dockwidget.combo_layer.blockSignals(True)
+        self.dockwidget.combo_bacias.blockSignals(True)
+        self.dockwidget.combo_vias.blockSignals(True)
+        
         self.dockwidget.combo_layer.clear()
+        self.dockwidget.combo_bacias.clear()
+        self.dockwidget.combo_vias.clear()
         
         todas_camadas = QgsProject.instance().mapLayers().values()
         for layer in todas_camadas:
             if layer.type() == QgsMapLayerType.RasterLayer:
                 self.dockwidget.combo_layer.addItem(layer.name(), layer.id())
+            elif layer.type() == QgsMapLayerType.VectorLayer:
+                geom_type = layer.geometryType()
+                from qgis.core import QgsWkbTypes
+                if geom_type == QgsWkbTypes.PolygonGeometry:
+                    self.dockwidget.combo_bacias.addItem(layer.name(), layer.id())
+                elif geom_type == QgsWkbTypes.LineGeometry:
+                    self.dockwidget.combo_vias.addItem(layer.name(), layer.id())
         
         # Tenta restaurar a seleção anterior pelo nome
-        index = self.dockwidget.combo_layer.findText(camada_atual)
-        if index >= 0:
-            self.dockwidget.combo_layer.setCurrentIndex(index)
+        index_raster = self.dockwidget.combo_layer.findText(camada_atual)
+        if index_raster >= 0: self.dockwidget.combo_layer.setCurrentIndex(index_raster)
+            
+        index_bacia = self.dockwidget.combo_bacias.findText(bacia_atual)
+        if index_bacia >= 0: self.dockwidget.combo_bacias.setCurrentIndex(index_bacia)
+            
+        index_vias = self.dockwidget.combo_vias.findText(vias_atual)
+        if index_vias >= 0: self.dockwidget.combo_vias.setCurrentIndex(index_vias)
             
         self.dockwidget.combo_layer.blockSignals(False)
+        self.dockwidget.combo_bacias.blockSignals(False)
+        self.dockwidget.combo_vias.blockSignals(False)
+        
+        self.atualizar_campos_vias()
 
     def guardar_selecao_camada(self):
         if self.dockwidget:
@@ -440,6 +469,32 @@ class Medir3DPlugin:
             if layer_name:
                 settings = QgsSettings()
                 settings.setValue("Medir3D/lastLayer", layer_name)
+            
+            bacia_name = self.dockwidget.combo_bacias.currentText()
+            if bacia_name:
+                settings = QgsSettings()
+                settings.setValue("Medir3D/lastBacia", bacia_name)
+
+    def atualizar_campos_vias(self):
+        if not self.dockwidget: return
+        
+        vias_name = self.dockwidget.combo_vias.currentText()
+        if vias_name:
+            settings = QgsSettings()
+            settings.setValue("Medir3D/lastVias", vias_name)
+            
+        layer_id = self.dockwidget.combo_vias.currentData()
+        self.dockwidget.combo_campo_n.clear()
+        self.dockwidget.combo_campo_lamina.clear()
+        self.dockwidget.combo_campo_caimento.clear()
+        
+        if layer_id:
+            layer = QgsProject.instance().mapLayer(layer_id)
+            if layer:
+                fields = [f.name() for f in layer.fields()]
+                self.dockwidget.combo_campo_n.addItems(fields)
+                self.dockwidget.combo_campo_lamina.addItems(fields)
+                self.dockwidget.combo_campo_caimento.addItems(fields)
 
     def get_camada_selecionada(self):
         layer_id = self.dockwidget.combo_layer.currentData()
@@ -503,4 +558,219 @@ class Medir3DPlugin:
         
         self.iface.mapCanvas().setMapTool(self.map_tool)
         self.dockwidget.add_result("Ferramenta 3D ativada.\n- ESQUERDO: Adicionar pontos do traçado\n- DIREITO: Finalizar e Gerar PVs")
+
+    def calcular_capacidade_sarjeta(self, n, y_max, sx, i_long):
+        if i_long <= 0 or sx <= 0:
+            return 0.0
+        z = 1.0 / sx
+        area = (z * (y_max ** 2)) / 2.0
+        perimetro_molhado = y_max + (y_max * ((1 + z**2) ** 0.5))
+        raio_hidraulico = area / perimetro_molhado
+        q_cap = (1.0 / n) * area * (raio_hidraulico ** (2/3)) * (i_long ** 0.5)
+        return q_cap
+
+    def calcular_bocas_de_lobo(self):
+        self.dockwidget.add_result("Iniciando cálculo de sarjetas...")
+        raster_layer = self.get_camada_selecionada()
+        if not raster_layer:
+            self.dockwidget.add_result("Erro: Selecione uma camada raster (MDT/MDS).")
+            return
+            
+        vias_id = self.dockwidget.combo_vias.currentData()
+        bacias_id = self.dockwidget.combo_bacias.currentData()
+        
+        if not vias_id or not bacias_id:
+            self.dockwidget.add_result("Erro: Selecione as camadas de Vias e Bacias.")
+            return
+            
+        layer_vias = QgsProject.instance().mapLayer(vias_id)
+        layer_bacias = QgsProject.instance().mapLayer(bacias_id)
+        
+        if not layer_vias or not layer_bacias:
+            self.dockwidget.add_result("Erro: Camadas não encontradas.")
+            return
+
+        is_dynamic = self.dockwidget.chk_dinamico.isChecked()
+        
+        try:
+            n_fixo = float(self.dockwidget.input_manning.text().replace(',', '.'))
+            lam_fixo = float(self.dockwidget.input_lamina.text().replace(',', '.'))
+            cai_fixo = float(self.dockwidget.input_caimento.text().replace(',', '.')) / 100.0
+            q_engol_fixo = float(self.dockwidget.input_engolimento.text().replace(',', '.'))
+            margem_segur = float(self.dockwidget.input_margem.text().replace(',', '.')) / 100.0
+            dist_max = float(self.dockwidget.input_dist_max.text().replace(',', '.'))
+            dist_min = float(self.dockwidget.input_dist_min.text().replace(',', '.'))
+        except ValueError:
+            self.dockwidget.add_result("Erro: Parâmetros numéricos inválidos.")
+            return
+
+        campo_n = self.dockwidget.combo_campo_n.currentText()
+        campo_lam = self.dockwidget.combo_campo_lamina.currentText()
+        campo_cai = self.dockwidget.combo_campo_caimento.currentText()
+
+        crs = self.iface.mapCanvas().mapSettings().destinationCrs().authid()
+        from qgis.core import QgsVectorLayer, QgsField, QgsFeature, QgsGeometry, QgsPointXY, QgsRaster, QgsSpatialIndex, QgsCoordinateTransform, QgsWkbTypes
+        from qgis.PyQt.QtCore import QVariant
+        import math
+        
+        layer_bl = QgsVectorLayer(f"Point?crs={crs}", "Bocas de Lobo (Temp)", "memory")
+        pr_bl = layer_bl.dataProvider()
+        
+        pr_bl.addAttributes([
+            QgsField("q_cap", QVariant.Double),
+            QgsField("q_acc", QVariant.Double),
+            QgsField("i_long", QVariant.Double),
+            QgsField("qtd_grelhas", QVariant.Int)
+        ])
+        layer_bl.updateFields()
+        
+        features_bl = []
+        
+        def get_z(pt):
+            canvas_crs = self.iface.mapCanvas().mapSettings().destinationCrs()
+            raster_crs = raster_layer.crs()
+            if canvas_crs != raster_crs:
+                transform = QgsCoordinateTransform(canvas_crs, raster_crs, QgsProject.instance())
+                pt_trans = transform.transform(pt)
+            else:
+                pt_trans = pt
+            ident = raster_layer.dataProvider().identify(pt_trans, QgsRaster.IdentifyFormatValue)
+            if ident.isValid() and ident.results():
+                for val in ident.results().values():
+                    if val is not None:
+                        return float(val)
+            return 0.0
+
+        index_vias = QgsSpatialIndex(layer_vias.getFeatures())
+        vias_selecionadas_ids = [f.id() for f in layer_vias.selectedFeatures()]
+        
+        selected_bacias = list(layer_bacias.selectedFeatures())
+        if not selected_bacias:
+            self.dockwidget.add_result("Erro: Selecione a(s) bacia(s) no mapa.")
+            return
+
+        self.dockwidget.add_result(f"\n--- CÁLCULO DINÂMICO (Racional Pro) ---")
+        
+        for bacia in selected_bacias:
+            bacia_geom = bacia.geometry()
+            area_ha = bacia_geom.area() / 10000.0
+            q_total_bacia = (0.5 * 150 * area_ha) / 360.0
+            
+            self.dockwidget.add_result(f"\nBacia {bacia.id()}: Área={area_ha:.2f}ha, Q_total={q_total_bacia:.4f}m3/s")
+            
+            # Passo 1: Identificar e preparar vias na bacia
+            vias_na_bacia = []
+            l_total_vias = 0.0
+            candidate_ids = index_vias.intersects(bacia_geom.boundingBox())
+            for v_id in candidate_ids:
+                if vias_selecionadas_ids and v_id not in vias_selecionadas_ids: continue
+                fv = layer_vias.getFeature(v_id)
+                if fv.geometry().intersects(bacia_geom):
+                    inter = fv.geometry().intersection(bacia_geom)
+                    for part in inter.asGeometryCollection() if inter.isMultipart() else [inter]:
+                        lin = part.asPolyline()
+                        if len(lin) < 2: continue
+                        z_i, z_f = get_z(QgsPointXY(lin[0])), get_z(QgsPointXY(lin[-1]))
+                        # Garante orientação montante -> jusante
+                        if z_f > z_i: lin.reverse(); z_i, z_f = z_f, z_i
+                        dist = part.length()
+                        if dist < 1.0: continue
+                        vias_na_bacia.append({'geom': part, 'pts': lin, 'zi': z_i, 'zf': z_f, 'L': dist, 'feat': fv})
+                        l_total_vias += dist
+
+            if l_total_vias == 0: continue
+            q_linear = q_total_bacia / l_total_vias # m3/s por metro linear
+            
+            # Passo 2: Ordenação Topológica Simplificada (por Z máximo)
+            vias_na_bacia.sort(key=lambda x: x['zi'], reverse=True)
+            
+            # Dicionário para rastrear vazão que chega ao final de cada via
+            flow_at_point = {} # (x,y) -> q_acumulado
+
+            for vdata in vias_na_bacia:
+                p_ini = (round(vdata['pts'][0].x(), 2), round(vdata['pts'][0].y(), 2))
+                q_acc = flow_at_point.get(p_ini, 0.0)
+                
+                # Parâmetros hidráulicos
+                n, lam, cai = n_fixo, lam_fixo, cai_fixo
+                if is_dynamic:
+                    fv = vdata['feat']
+                    if fv[campo_n] is not None: n = float(fv[campo_n])
+                    if fv[campo_lam] is not None: lam = float(fv[campo_lam])
+                    if fv[campo_cai] is not None: cai = float(fv[campo_cai]) / 100.0
+                
+                i_long = max(0.001, abs(vdata['zi'] - vdata['zf']) / vdata['L'])
+                q_cap = self.calcular_capacidade_sarjeta(n, lam, cai, i_long)
+                
+                # 4. Correção de Eficiência por Declividade (Splash-over)
+                if i_long > 0.08:
+                    fator_e = 0.50
+                elif i_long > 0.04:
+                    fator_e = 0.75
+                else:
+                    fator_e = 1.0
+                
+                q_engol_real = q_engol_fixo * fator_e
+                
+                # Percorre a via em passos de 10m
+                passo = 10.0
+                dist_percorrida = 0.0
+                dist_desde_ultima_bl = 0.0
+                pts = vdata['pts']
+                
+                last_fbl_index_in_this_via = -1
+                
+                while dist_percorrida < vdata['L']:
+                    segmento_l = min(passo, vdata['L'] - dist_percorrida)
+                    q_acc += q_linear * segmento_l
+                    dist_percorrida += segmento_l
+                    dist_desde_ultima_bl += segmento_l
+                    
+                    is_final_segment = dist_percorrida >= vdata['L'] - 3.0
+                    
+                    gatilho_hidraulico = q_acc > (q_cap * margem_segur)
+                    gatilho_geometrico = dist_desde_ultima_bl >= dist_max
+                    # 3. Gatilho Topológico: esquina/ponto baixo com água considerável
+                    gatilho_topologico = is_final_segment and q_acc > (q_engol_real * 0.5)
+                    
+                    if gatilho_hidraulico or gatilho_geometrico or gatilho_topologico:
+                        # 2. Agrupamento em Baterias
+                        vazao_a_abater = q_acc - (q_cap * margem_segur) if gatilho_hidraulico else q_acc
+                        
+                        if vazao_a_abater <= 0 and (gatilho_geometrico or gatilho_topologico):
+                             qtd_novas = 1 # Para manter o espaçamento/secar esquina
+                        else:
+                             qtd_novas = math.ceil(vazao_a_abater / q_engol_real)
+                        
+                        # 1. Trava de Distância Mínima
+                        if dist_desde_ultima_bl < dist_min and last_fbl_index_in_this_via != -1:
+                            # Acumula na última bateria dessa mesma via
+                            last_fbl = features_bl[last_fbl_index_in_this_via]
+                            attr = last_fbl.attributes()
+                            attr[3] += qtd_novas
+                            last_fbl.setAttributes(attr)
+                            
+                            q_acc = max(0.0, q_acc - (qtd_novas * q_engol_real))
+                        else:
+                            # Lança nova Boca de Lobo (agora sem limite físico estrito, refletindo a necessidade real)
+                            bl_pos = vdata['geom'].interpolate(dist_percorrida).asPoint()
+                            fbl = QgsFeature()
+                            fbl.setGeometry(QgsGeometry.fromPointXY(bl_pos))
+                            fbl.setAttributes([round(q_cap, 4), round(q_acc, 4), round(i_long, 4), qtd_novas])
+                            features_bl.append(fbl)
+                            last_fbl_index_in_this_via = len(features_bl) - 1
+                            
+                            q_acc = max(0.0, q_acc - (qtd_novas * q_engol_real))
+                            dist_desde_ultima_bl = 0.0 # Reseta a distância
+                
+                # Transmite vazão residual para o ponto final
+                p_fim = (round(vdata['pts'][-1].x(), 2), round(vdata['pts'][-1].y(), 2))
+                flow_at_point[p_fim] = flow_at_point.get(p_fim, 0.0) + q_acc
+
+        if features_bl:
+            pr_bl.addFeatures(features_bl)
+            QgsProject.instance().addMapLayer(layer_bl)
+            self.dockwidget.add_result(f"Sucesso: {len(features_bl)} BLs lançadas com fluxo dinâmico.")
+        else:
+            self.dockwidget.add_result("Nenhuma BL necessária.")
 
