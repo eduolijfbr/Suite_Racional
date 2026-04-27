@@ -2,7 +2,12 @@ import os
 from qgis.PyQt.QtCore import Qt, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
-from qgis.core import QgsProject, QgsMapLayerType, QgsSettings, QgsVectorLayer, QgsField, QgsMessageLog, Qgis
+from qgis.core import QgsProject, QgsMapLayerType, QgsSettings, QgsVectorLayer, QgsField, QgsMessageLog, Qgis, QgsGeometry, QgsPointXY, QgsCoordinateTransform, QgsRaster, QgsFeatureRequest
+from qgis.gui import QgsMapToolEmitPoint
+import heapq
+import traceback
+import itertools
+import math
 from .medir_3d_dockwidget import Medir3DDockWidget
 from .maptool_3d import MapTool3D
 
@@ -14,33 +19,75 @@ class Medir3DPlugin:
         self.action = None
         self.map_tool = None
         self.active_projeto_id = None
+        self.ponto_inicio = None
+        self.ponto_fim = None
+        self.point_tool = None
 
     def initGui(self):
-        # Configurar menu e barra de ferramentas
         from qgis.PyQt.QtWidgets import QToolBar
+        
+        # 1. Configurar Ícone e Ação
         icon_path = os.path.join(self.plugin_dir, 'icon.svg')
         self.action = QAction(QIcon(icon_path), "Medir 3D", self.iface.mainWindow())
-        self.action.setObjectName("Medir3DAction")
+        # Usa um nome ÚNICO para evitar conflitos se outros plugins usarem o mesmo boilerplate
+        self.action_unique_name = "Action_SuiteRacional_Medir3D_v1"
+        self.action.setObjectName(self.action_unique_name)
         self.action.setWhatsThis("Medir distâncias e perfis 3D")
         self.action.setStatusTip("Abrir painel Medir 3D")
         self.action.triggered.connect(self.run)
+        
+        # 2. Configurar Menu
+        self.iface.addPluginToMenu("&Suite Racional Pro", self.action)
 
+        # 3. Configurar Barra de Ferramentas Compartilhada
         self.toolbar_name = 'SuiteRacionalPro'
         self.toolbar = self.iface.mainWindow().findChild(QToolBar, self.toolbar_name)
         if not self.toolbar:
             self.toolbar = self.iface.addToolBar('Suite Racional Pro')
             self.toolbar.setObjectName(self.toolbar_name)
             
-        self.toolbar.addAction(self.action)
-        self.iface.addPluginToMenu("&Suite Racional Pro", self.action)
+        # 4. Prevenir Duplicação na Toolbar
+        action_exists = False
+        for act in self.toolbar.actions():
+            # Checa o nome único E o texto para garantir que não estamos duplicando
+            if act.objectName() == self.action_unique_name or act.text() == "Medir 3D":
+                action_exists = True
+                # Opcional: Se já existe uma ação antiga com o mesmo texto, podemos removê-la aqui
+                # self.toolbar.removeAction(act)
+                # action_exists = False
+                break
+                
+        if not action_exists:
+            self.toolbar.addAction(self.action)
 
     def unload(self):
-        self.limpar_dados(permanente=True)
+        try:
+            self.limpar_dados(permanente=True)
+        except:
+            pass # Garante que a limpeza visual não impeça a remoção do ícone
+        
         if self.dockwidget:
             self.iface.removeDockWidget(self.dockwidget)
-        self.iface.removePluginMenu("&Suite Racional Pro", self.action)
-        if hasattr(self, 'toolbar') and self.toolbar:
-            self.toolbar.removeAction(self.action)
+            self.dockwidget = None
+
+        if self.action:
+            self.iface.removePluginMenu("&Suite Racional Pro", self.action)
+            
+            if hasattr(self, 'toolbar') and self.toolbar:
+                self.toolbar.removeAction(self.action)
+                
+            self.action = None
+
+
+
+    def add_layer_to_group(self, layer, group_name="Medir 3D"):
+        root = QgsProject.instance().layerTreeRoot()
+        group = root.findGroup(group_name)
+        if not group:
+            group = root.insertGroup(0, group_name)
+        
+        QgsProject.instance().addMapLayer(layer, False) # Adiciona ao projeto sem colocar na raiz
+        group.addLayer(layer)
 
     def run(self):
         if not self.dockwidget:
@@ -60,6 +107,7 @@ class Medir3DPlugin:
             self.dockwidget.btn_carregar_historico.clicked.connect(self.carregar_historico)
             self.dockwidget.btn_excluir_historico.clicked.connect(self.excluir_historico)
             self.dockwidget.btn_calc_sarjeta.clicked.connect(self.calcular_bocas_de_lobo)
+            self.dockwidget.btn_calc_otimo.clicked.connect(self.calcular_tracado_economico)
             QgsProject.instance().layersAdded.connect(self.atualizar_camadas)
             QgsProject.instance().layersRemoved.connect(self.atualizar_camadas)
             
@@ -402,7 +450,7 @@ class Medir3DPlugin:
         view_rede.dataProvider().addAttributes(layer_rede_db.fields())
         view_rede.updateFields()
         view_rede.dataProvider().addFeatures([feat_rede])
-        QgsProject.instance().addMapLayer(view_rede)
+        self.add_layer_to_group(view_rede)
         
         # PVs no mapa (Como Temp)
         if layer_pv_db.isValid() and layer_pv_db.featureCount() > 0:
@@ -410,7 +458,7 @@ class Medir3DPlugin:
             view_pv.dataProvider().addAttributes(layer_pv_db.fields())
             view_pv.updateFields()
             view_pv.dataProvider().addFeatures(list(layer_pv_db.getFeatures()))
-            QgsProject.instance().addMapLayer(view_pv)
+            self.add_layer_to_group(view_pv)
             self.dockwidget.add_result(f"\nRecuperados {layer_pv_db.featureCount()} PVs.")
             
         self.dockwidget.add_result("\nPronto para novo cálculo ou edição.")
@@ -840,13 +888,282 @@ class Medir3DPlugin:
 
         if features_pv:
             pr_pv.addFeatures(features_pv)
-            QgsProject.instance().addMapLayer(layer_pv)
+            self.add_layer_to_group(layer_pv)
             
             if features_bl:
                 pr_bl.addFeatures(features_bl)
-                QgsProject.instance().addMapLayer(layer_bl)
+                self.add_layer_to_group(layer_bl)
             
             self.dockwidget.add_result(f"Sucesso: {len(features_pv)} PVs e {len(features_bl)} BLs lançados com fluxo dinâmico.")
         else:
-            self.dockwidget.add_result("Nenhum PV ou BL necessário.")
+            self.dockwidget.add_result("Nenhuma BL necessária.")
 
+    # --- Funções de Otimização de Traçado (Global Automático) ---
+
+    def get_z_local(self, pt, raster_layer):
+        # Garantir que pt é QgsPointXY (identify() não aceita QgsPoint 3D)
+        if not isinstance(pt, QgsPointXY):
+            pt = QgsPointXY(pt.x(), pt.y())
+            
+        canvas_crs = self.iface.mapCanvas().mapSettings().destinationCrs()
+        raster_crs = raster_layer.crs()
+        if canvas_crs != raster_crs:
+            transform = QgsCoordinateTransform(canvas_crs, raster_crs, QgsProject.instance())
+            pt_trans = transform.transform(pt)
+        else:
+            pt_trans = pt
+            
+        # Reforçar conversão após transformação (pode retornar QgsPoint)
+        if not isinstance(pt_trans, QgsPointXY):
+            pt_trans = QgsPointXY(pt_trans.x(), pt_trans.y())
+
+        ident = raster_layer.dataProvider().identify(pt_trans, QgsRaster.IdentifyFormatValue)
+        if ident.isValid() and ident.results():
+            for val in ident.results().values():
+                if val is not None and str(val).lower() != 'nan':
+                    return float(val)
+        return 0.0
+
+    def calcular_tracado_economico(self):
+        from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsVectorLayer, QgsProject, QgsFeatureRequest, QgsMessageLog, Qgis
+        try:
+            raster_layer = self.get_camada_selecionada()
+            vias_id = self.dockwidget.combo_vias.currentData()
+            bacias_id = self.dockwidget.combo_bacias.currentData()
+
+            if not raster_layer or not vias_id or not bacias_id:
+                self.dockwidget.add_result("Erro: Selecione MDT, Vias e Bacias para o cálculo.")
+                return
+
+            layer_vias = QgsProject.instance().mapLayer(vias_id)
+            layer_bacias = QgsProject.instance().mapLayer(bacias_id)
+
+            self.dockwidget.add_result("\nAnalisando topografia global da bacia...")
+        
+            # 1. Obter a área de estudo (União de todas as bacias selecionadas)
+            bacia_geom = QgsGeometry()
+            if layer_bacias.selectedFeatureCount() > 0:
+                self.dockwidget.add_result(f"Processando {layer_bacias.selectedFeatureCount()} bacia(s) selecionada(s)...")
+                geoms = [f.geometry() for f in layer_bacias.selectedFeatures()]
+                bacia_geom = QgsGeometry.unaryUnion(geoms)
+            else:
+                for b in layer_bacias.getFeatures():
+                    bacia_geom = QgsGeometry(b.geometry())
+                    break
+
+            if not bacia_geom or bacia_geom.isEmpty():
+                self.dockwidget.add_result("Erro: Nenhuma bacia encontrada ou selecionada.")
+                return
+        
+            # 2. Construir Grafo Reverso (para Dijkstra a partir do exutório)
+            # Um fluxo válido vai de U para V. No grafo reverso, criamos uma aresta V -> U.
+            graph_rev = {}
+            nodes_z = {}
+            original_edges = {} # (U, V) -> (pt_U, pt_V)
+        
+            request = QgsFeatureRequest().setFilterRect(bacia_geom.boundingBox())
+        
+            from qgis.core import QgsWkbTypes
+            for feat in layer_vias.getFeatures(request):
+                geom = feat.geometry()
+                if not geom.intersects(bacia_geom): continue
+            
+                geom_inter = geom.intersection(bacia_geom)
+                if geom_inter.isEmpty(): continue
+
+                # Extrair todas as polilinhas da interseção (suporta MultiLineString e GeometryCollection)
+                lines_to_process = []
+                if geom_inter.type() == QgsWkbTypes.LineGeometry:
+                    if geom_inter.isMultipart():
+                        lines_to_process = geom_inter.asMultiPolyline()
+                    else:
+                        lines_to_process = [geom_inter.asPolyline()]
+                else:
+                    # Pode ser uma GeometryCollection contendo linhas e pontos
+                    try:
+                        for g in geom_inter.asGeometryCollection():
+                            if g.type() == QgsWkbTypes.LineGeometry:
+                                if g.isMultipart(): lines_to_process.extend(g.asMultiPolyline())
+                                else: lines_to_process.append(g.asPolyline())
+                    except: pass
+
+                for pts in lines_to_process:
+                    if len(pts) < 2: continue
+                
+                    for i in range(len(pts) - 1):
+                        p1, p2 = pts[i], pts[i+1]
+                        n1 = (round(p1.x(), 3), round(p1.y(), 3)) # Aumentada precisão
+                        n2 = (round(p2.x(), 3), round(p2.y(), 3))
+                        
+                        if n1 == n2: continue
+
+                        if n1 not in nodes_z: nodes_z[n1] = self.get_z_local(p1, raster_layer)
+                        if n2 not in nodes_z: nodes_z[n2] = self.get_z_local(p2, raster_layer)
+                    
+                        z1, z2 = nodes_z[n1], nodes_z[n2]
+                        dist = p1.distance(p2)
+                        if dist < 0.01: continue
+
+                        def calc_custo(z_u, z_v, l):
+                            slope = (z_u - z_v) / l
+                            if slope >= 0.005: return l * 1.0
+                            delta_h = (0.005 - slope) * l
+                            if delta_h <= 4.0: return l * (1.0 + 20.0 * delta_h)
+                            return float('inf')
+
+                        cost12 = calc_custo(z1, z2, dist)
+                        cost21 = calc_custo(z2, z1, dist)
+
+                        if n1 not in graph_rev: graph_rev[n1] = {}
+                        if n2 not in graph_rev: graph_rev[n2] = {}
+
+                        # Armazenar a melhor geometria para cada par de nós (evita sobreposição)
+                        if cost12 != float('inf'):
+                            if n1 not in graph_rev[n2] or cost12 < graph_rev[n2][n1]:
+                                graph_rev[n2][n1] = cost12
+                                original_edges[(n1, n2)] = (p1, p2)
+                            
+                        if cost21 != float('inf'):
+                            if n2 not in graph_rev[n1] or cost21 < graph_rev[n1][n2]:
+                                graph_rev[n1][n2] = cost21
+                                original_edges[(n2, n1)] = (p2, p1)
+
+            # --- Identificação de Pontos Extremos por Tramo ---
+            pts_altos_tramo = []
+            pts_baixos_tramo = []
+            
+            for feat in layer_vias.getFeatures(request):
+                geom = feat.geometry()
+                if not geom.intersects(bacia_geom): continue
+                
+                # Coletar todos os vértices e seus Zs
+                z_extremos = [] # (z, point)
+                
+                # Itera em todas as partes da geometria
+                for pt in geom.vertices():
+                    z = self.get_z_local(pt, raster_layer)
+                    z_extremos.append((z, QgsPointXY(pt.x(), pt.y())))
+                
+                if z_extremos:
+                    # Encontrar o mais alto e o mais baixo deste tramo específico
+                    alto = max(z_extremos, key=lambda x: x[0])
+                    baixo = min(z_extremos, key=lambda x: x[0])
+                    
+                    # Se houver diferença significativa de altura no tramo
+                    pts_altos_tramo.append(alto)
+                    pts_baixos_tramo.append(baixo)
+
+            if not graph_rev:
+                self.dockwidget.add_result("Erro: Nenhuma via viável encontrada dentro da bacia.")
+                return
+
+            # 3. Identificar Sinks (Exutórios) locais para cada componente conectada
+            # Isso garante que redes de ruas desconectadas (em sub-bacias separadas)
+            # recebam seu próprio cálculo de traçado.
+            exutorios = []
+            visited_nodes = set()
+            
+            # Grafo bidirecional simples para achar componentes conectadas
+            adj = {n: set() for n in nodes_z}
+            for (n1, n2) in original_edges.keys():
+                adj[n1].add(n2)
+                adj[n2].add(n1)
+                
+            for node in nodes_z:
+                if node not in visited_nodes:
+                    comp = []
+                    stack = [node]
+                    while stack:
+                        curr = stack.pop()
+                        if curr not in visited_nodes:
+                            visited_nodes.add(curr)
+                            comp.append(curr)
+                            stack.extend(adj[curr])
+                    
+                    if comp:
+                        # O exutório desta rede isolada é o seu ponto mais baixo
+                        min_node = min(comp, key=lambda n: nodes_z[n])
+                        exutorios.append(min_node)
+                        
+            self.dockwidget.add_result(f"Identificados {len(exutorios)} exutório(s) local(is) para as redes. Iniciando propagação...")
+
+            # 4. Dijkstra Multi-Source a partir dos Exutórios no Grafo Reverso
+            import itertools
+            counter = itertools.count()
+            queue = []
+            mins = {}
+            for e in exutorios:
+                heapq.heappush(queue, (0, next(counter), e))
+                mins[e] = 0
+                
+            predecessors = {} 
+            
+            while queue:
+                (cost, _, v_atual) = heapq.heappop(queue)
+                if cost > mins.get(v_atual, float('inf')): continue
+                
+                for v_origem, weight in graph_rev.get(v_atual, {}).items():
+                    next_cost = cost + weight
+                    if next_cost < mins.get(v_origem, float('inf')):
+                        mins[v_origem] = next_cost
+                        predecessors[v_origem] = v_atual
+                        heapq.heappush(queue, (next_cost, next(counter), v_origem))
+
+            # 5. Gerar Camada de Resultado com a Árvore (Espinha de Peixe)
+            crs = layer_vias.crs().authid()
+            res_layer = QgsVectorLayer(f"LineString?crs={crs}", "Traçado Sugerido (Tree)", "memory")
+            pr = res_layer.dataProvider()
+            
+            features_tree = []
+            for origem, destino in predecessors.items():
+                # O fluxo real é origem -> destino
+                p_orig, p_dest = original_edges[(origem, destino)]
+                feat = QgsFeature()
+                feat.setGeometry(QgsGeometry.fromPolylineXY([p_orig, p_dest]))
+                features_tree.append(feat)
+                
+            pr.addFeatures(features_tree)
+            
+            if features_tree:
+                self.add_layer_to_group(res_layer)
+                
+                # Adicionar camadas de pontos extremos se houver dados
+                if pts_altos_tramo:
+                    l_altos = QgsVectorLayer(f"Point?crs={crs}", "Pontos Altos por Tramo (Temp)", "memory")
+                    l_baixos = QgsVectorLayer(f"Point?crs={crs}", "Pontos Baixos por Tramo (Temp)", "memory")
+                    
+                    l_altos.dataProvider().addAttributes([QgsField("Z", QVariant.Double)])
+                    l_baixos.dataProvider().addAttributes([QgsField("Z", QVariant.Double)])
+                    l_altos.updateFields()
+                    l_baixos.updateFields()
+                    
+                    feats_altos = []
+                    for z, pt in pts_altos_tramo:
+                        f = QgsFeature()
+                        f.setGeometry(QgsGeometry.fromPointXY(pt))
+                        f.setAttributes([z])
+                        feats_altos.append(f)
+                    
+                    feats_baixos = []
+                    for z, pt in pts_baixos_tramo:
+                        f = QgsFeature()
+                        f.setGeometry(QgsGeometry.fromPointXY(pt))
+                        f.setAttributes([z])
+                        feats_baixos.append(f)
+                        
+                    l_altos.dataProvider().addFeatures(feats_altos)
+                    l_baixos.dataProvider().addFeatures(feats_baixos)
+                    
+                    self.add_layer_to_group(l_altos)
+                    self.add_layer_to_group(l_baixos)
+
+                self.dockwidget.add_result(f"Sucesso! Árvore de caminhos gerada com {len(features_tree)} tramos.")
+                self.dockwidget.add_result(f"Cobertura: {len(mins)} de {len(nodes_z)} pontos da rede conectados ao exutório.")
+                self.dockwidget.add_result("Nota: Trechos ausentes excedem o limite de 5m de profundidade.")
+            else:
+                self.dockwidget.add_result("Aviso: Nenhum tramo viável pôde ser conectado ao exutório.")
+
+        except Exception as e:
+            self.dockwidget.add_result(f"Erro no cálculo: {str(e)}")
+            import traceback
+            QgsMessageLog.logMessage(traceback.format_exc(), "Medir 3D", Qgis.Critical)

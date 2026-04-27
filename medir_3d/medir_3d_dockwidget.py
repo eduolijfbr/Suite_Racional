@@ -146,6 +146,20 @@ class Medir3DDockWidget(QDockWidget):
         self.tab_sarjeta_layout.addStretch()
         self.tabs.addTab(self.tab_sarjeta, "Sarjetas (PVs e BLs)")
         
+        # --- TAB 3: Otimização de Traçado ---
+        self.tab_otimiza = QWidget()
+        self.tab_otimiza_layout = QVBoxLayout(self.tab_otimiza)
+        
+        self.tab_otimiza_layout.addWidget(QLabel("Traçado Econômico Global (MDT + Vias):"))
+        self.tab_otimiza_layout.addWidget(QLabel("Nota: A análise cruzará os logradouros com a\ntopografia na bacia selecionada."))
+        
+        self.btn_calc_otimo = QPushButton("Calcular Traçado Econômico")
+        self.btn_calc_otimo.setStyleSheet("background-color: #e1f5fe; font-weight: bold;")
+        self.tab_otimiza_layout.addWidget(self.btn_calc_otimo)
+        
+        self.tab_otimiza_layout.addStretch()
+        self.tabs.addTab(self.tab_otimiza, "Otimização")
+        
         # --- Global Sections ---
         self.layout.addWidget(QLabel("Histórico de Redes Salvas:"))
         hist_layout = QHBoxLayout()
