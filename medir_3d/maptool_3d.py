@@ -144,6 +144,14 @@ class MapTool3D(QgsMapToolEmitPoint):
 
     def finalizar_medicao(self, raster_layer):
         if len(self.points) > 1:
+            # Validar tendência de declividade (Independência da ordem de clique)
+            # Se o ponto final for mais alto que o inicial, invertemos a lista
+            # para que o cálculo hidráulico (que assume descida) funcione corretamente.
+            if self.z_values[-1] > self.z_values[0]:
+                self.points.reverse()
+                self.z_values.reverse()
+                self.measurement_done.emit("Nota: Traçado detectado como 'subida'. Invertendo para cálculo de drenagem (alto -> baixo).")
+
             self.last_points = list(self.points)
             self.criar_camada_rede()
             self.criar_camada_pv(raster_layer, self.last_points)

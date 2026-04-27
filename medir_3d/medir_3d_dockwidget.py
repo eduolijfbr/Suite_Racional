@@ -109,6 +109,10 @@ class Medir3DDockWidget(QDockWidget):
         self.input_dist_min = QLineEdit("15.0")
         grid_params.addWidget(self.input_dist_min, 3, 1)
 
+        grid_params.addWidget(QLabel("Largura da Via (m):"), 3, 2)
+        self.input_largura_via = QLineEdit("10.0")
+        grid_params.addWidget(self.input_largura_via, 3, 3)
+
         group_params.setLayout(grid_params)
         self.tab_sarjeta_layout.addWidget(group_params)
         
@@ -136,11 +140,11 @@ class Medir3DDockWidget(QDockWidget):
         self.tab_sarjeta_layout.addWidget(self.group_dinamico)
         
         # Botões de Ação Sarjeta
-        self.btn_calc_sarjeta = QPushButton("Lançar Bocas de Lobo (Sarjetas)")
+        self.btn_calc_sarjeta = QPushButton("Lançar PVs e BLs (Sarjeta)")
         self.tab_sarjeta_layout.addWidget(self.btn_calc_sarjeta)
         
         self.tab_sarjeta_layout.addStretch()
-        self.tabs.addTab(self.tab_sarjeta, "Sarjetas (BLs)")
+        self.tabs.addTab(self.tab_sarjeta, "Sarjetas (PVs e BLs)")
         
         # --- Global Sections ---
         self.layout.addWidget(QLabel("Histórico de Redes Salvas:"))

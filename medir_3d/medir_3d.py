@@ -600,6 +600,7 @@ class Medir3DPlugin:
             margem_segur = float(self.dockwidget.input_margem.text().replace(',', '.')) / 100.0
             dist_max = float(self.dockwidget.input_dist_max.text().replace(',', '.'))
             dist_min = float(self.dockwidget.input_dist_min.text().replace(',', '.'))
+            largura_via = float(self.dockwidget.input_largura_via.text().replace(',', '.'))
         except ValueError:
             self.dockwidget.add_result("Erro: Parâmetros numéricos inválidos.")
             return
@@ -613,17 +614,28 @@ class Medir3DPlugin:
         from qgis.PyQt.QtCore import QVariant
         import math
         
+        # Camada de Poços de Visita (Eixo da via)
+        layer_pv = QgsVectorLayer(f"Point?crs={crs}", "PVs da Sarjeta (Temp)", "memory")
+        pr_pv = layer_pv.dataProvider()
+        
+        # Camada de Bocas de Lobo (Pares nos bordos)
         layer_bl = QgsVectorLayer(f"Point?crs={crs}", "Bocas de Lobo (Temp)", "memory")
         pr_bl = layer_bl.dataProvider()
         
-        pr_bl.addAttributes([
+        campos = [
             QgsField("q_cap", QVariant.Double),
             QgsField("q_acc", QVariant.Double),
             QgsField("i_long", QVariant.Double),
             QgsField("qtd_grelhas", QVariant.Int)
-        ])
+        ]
+        
+        pr_pv.addAttributes(campos)
+        layer_pv.updateFields()
+        
+        pr_bl.addAttributes(campos)
         layer_bl.updateFields()
         
+        features_pv = []
         features_bl = []
         
         def get_z(pt):
@@ -649,7 +661,7 @@ class Medir3DPlugin:
             self.dockwidget.add_result("Erro: Selecione a(s) bacia(s) no mapa.")
             return
 
-        self.dockwidget.add_result(f"\n--- CÁLCULO DINÂMICO (Racional Pro) ---")
+        self.dockwidget.add_result(f"\n--- CÁLCULO DINÂMICO (PVs e BLs) ---")
         
         for bacia in selected_bacias:
             bacia_geom = bacia.geometry()
@@ -718,7 +730,7 @@ class Medir3DPlugin:
                 dist_desde_ultima_bl = 0.0
                 pts = vdata['pts']
                 
-                last_fbl_index_in_this_via = -1
+                last_indices_in_this_via = []
                 
                 while dist_percorrida < vdata['L']:
                     segmento_l = min(passo, vdata['L'] - dist_percorrida)
@@ -743,22 +755,56 @@ class Medir3DPlugin:
                              qtd_novas = math.ceil(vazao_a_abater / q_engol_real)
                         
                         # 1. Trava de Distância Mínima
-                        if dist_desde_ultima_bl < dist_min and last_fbl_index_in_this_via != -1:
-                            # Acumula na última bateria dessa mesma via
-                            last_fbl = features_bl[last_fbl_index_in_this_via]
-                            attr = last_fbl.attributes()
-                            attr[3] += qtd_novas
-                            last_fbl.setAttributes(attr)
+                        if dist_desde_ultima_bl < dist_min and last_indices_in_this_via:
+                            # Acumula na última bateria dessa mesma via (PV e suas 2 BLs)
+                            for list_obj, idx in last_indices_in_this_via:
+                                feat = list_obj[idx]
+                                attr = feat.attributes()
+                                attr[3] += qtd_novas
+                                feat.setAttributes(attr)
                             
                             q_acc = max(0.0, q_acc - (qtd_novas * q_engol_real))
                         else:
-                            # Lança nova Boca de Lobo (agora sem limite físico estrito, refletindo a necessidade real)
-                            bl_pos = vdata['geom'].interpolate(dist_percorrida).asPoint()
-                            fbl = QgsFeature()
-                            fbl.setGeometry(QgsGeometry.fromPointXY(bl_pos))
-                            fbl.setAttributes([round(q_cap, 4), round(q_acc, 4), round(i_long, 4), qtd_novas])
-                            features_bl.append(fbl)
-                            last_fbl_index_in_this_via = len(features_bl) - 1
+                            # Lança novo Poço de Visita no Eixo e Bocas de Lobo nos Bordos
+                            pos_geom = vdata['geom'].interpolate(dist_percorrida)
+                            pt_curr = pos_geom.asPoint()
+                            
+                            # Feature PV
+                            fpv = QgsFeature()
+                            fpv.setGeometry(QgsGeometry.fromPointXY(pt_curr))
+                            fpv.setAttributes([round(q_cap, 4), round(q_acc, 4), round(i_long, 4), qtd_novas])
+                            features_pv.append(fpv)
+                            idx_pv = len(features_pv) - 1
+                            
+                            # Cálculo de Offset para BLs
+                            dist_next = min(dist_percorrida + 0.1, vdata['L'])
+                            dist_prev = max(dist_percorrida - 0.1, 0.0)
+                            
+                            if dist_percorrida + 0.1 <= vdata['L']:
+                                pt_next = vdata['geom'].interpolate(dist_next).asPoint()
+                                dx, dy = pt_next.x() - pt_curr.x(), pt_next.y() - pt_curr.y()
+                            else:
+                                pt_prev = vdata['geom'].interpolate(dist_prev).asPoint()
+                                dx, dy = pt_curr.x() - pt_prev.x(), pt_curr.y() - pt_prev.y()
+                            
+                            length = math.sqrt(dx*dx + dy*dy)
+                            current_last_indices = [(features_pv, idx_pv)]
+                            
+                            if length > 0:
+                                # Vetor unitário perpendicular
+                                nx, ny = -dy/length, dx/length
+                                offset = largura_via / 2.0
+                                
+                                for side in [-1, 1]:
+                                    bl_pos = QgsPointXY(pt_curr.x() + nx * offset * side, 
+                                                        pt_curr.y() + ny * offset * side)
+                                    fbl = QgsFeature()
+                                    fbl.setGeometry(QgsGeometry.fromPointXY(bl_pos))
+                                    fbl.setAttributes([round(q_cap, 4), round(q_acc, 4), round(i_long, 4), qtd_novas])
+                                    features_bl.append(fbl)
+                                    current_last_indices.append((features_bl, len(features_bl) - 1))
+                            
+                            last_indices_in_this_via = current_last_indices
                             
                             q_acc = max(0.0, q_acc - (qtd_novas * q_engol_real))
                             dist_desde_ultima_bl = 0.0 # Reseta a distância
@@ -767,10 +813,15 @@ class Medir3DPlugin:
                 p_fim = (round(vdata['pts'][-1].x(), 2), round(vdata['pts'][-1].y(), 2))
                 flow_at_point[p_fim] = flow_at_point.get(p_fim, 0.0) + q_acc
 
-        if features_bl:
-            pr_bl.addFeatures(features_bl)
-            QgsProject.instance().addMapLayer(layer_bl)
-            self.dockwidget.add_result(f"Sucesso: {len(features_bl)} BLs lançadas com fluxo dinâmico.")
+        if features_pv:
+            pr_pv.addFeatures(features_pv)
+            QgsProject.instance().addMapLayer(layer_pv)
+            
+            if features_bl:
+                pr_bl.addFeatures(features_bl)
+                QgsProject.instance().addMapLayer(layer_bl)
+            
+            self.dockwidget.add_result(f"Sucesso: {len(features_pv)} PVs e {len(features_bl)} BLs lançados com fluxo dinâmico.")
         else:
-            self.dockwidget.add_result("Nenhuma BL necessária.")
+            self.dockwidget.add_result("Nenhum PV ou BL necessário.")
 
