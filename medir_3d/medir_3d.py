@@ -683,8 +683,11 @@ class Medir3DPlugin:
                         lin = part.asPolyline()
                         if len(lin) < 2: continue
                         z_i, z_f = get_z(QgsPointXY(lin[0])), get_z(QgsPointXY(lin[-1]))
-                        # Garante orientação montante -> jusante
-                        if z_f > z_i: lin.reverse(); z_i, z_f = z_f, z_i
+                        # Garante orientação montante -> jusante na geometria para interpolação correta
+                        if z_f > z_i: 
+                            lin.reverse()
+                            part = QgsGeometry.fromPolylineXY(lin)
+                            z_i, z_f = z_f, z_i
                         dist = part.length()
                         if dist < 1.0: continue
                         vias_na_bacia.append({'geom': part, 'pts': lin, 'zi': z_i, 'zf': z_f, 'L': dist, 'feat': fv})
@@ -766,26 +769,48 @@ class Medir3DPlugin:
                             q_acc = max(0.0, q_acc - (qtd_novas * q_engol_real))
                         else:
                             # Lança novo Poço de Visita no Eixo e Bocas de Lobo nos Bordos
-                            pos_geom = vdata['geom'].interpolate(dist_percorrida)
-                            pt_curr = pos_geom.asPoint()
+                            # Ponto base da captação (BLs)
+                            pos_bl_geom = vdata['geom'].interpolate(dist_percorrida)
+                            pt_bl_base = pos_bl_geom.asPoint()
                             
-                            # Feature PV
+                            # Cálculo dinâmico do deslocamento (H) para garantir PV mais baixo que BL
+                            # considerando a coroa da rua (cross-slope) e visando inclinação entre 0.5% e 1.5%
+                            s_alvo = 0.01 # Alvo de 1.0% de inclinação na conexão
+                            w2 = largura_via / 2.0
+                            c_transv = cai # Inclinação transversal decimal
+                            
+                            # Se i_long (longitudinal) for maior que o alvo, calculamos H para compensar a coroa
+                            # H * i_long - (w2 * c_transv) = s_alvo * H  =>  H = (w2 * c_transv) / (i_long - s_alvo)
+                            if i_long > s_alvo + 0.002:
+                                shift_pv = (w2 * c_transv) / (i_long - s_alvo)
+                            else:
+                                # Em vias planas, usamos um deslocamento maior para buscar o ponto mais baixo possível
+                                # ou para indicar claramente a jusante, respeitando os limites do sistema
+                                shift_pv = 12.0 
+                            
+                            # Limitar o deslocamento para valores práticos e visíveis (entre 3m e 6m)
+                            shift_pv = max(3.0, min(shift_pv, 6.0))
+                            
+                            pos_pv_geom = vdata['geom'].interpolate(min(dist_percorrida + shift_pv, vdata['L']))
+                            pt_pv = pos_pv_geom.asPoint()
+                            
+                            # Feature PV (Deslocado para jusante conforme cálculo de inclinação)
                             fpv = QgsFeature()
-                            fpv.setGeometry(QgsGeometry.fromPointXY(pt_curr))
+                            fpv.setGeometry(QgsGeometry.fromPointXY(pt_pv))
                             fpv.setAttributes([round(q_cap, 4), round(q_acc, 4), round(i_long, 4), qtd_novas])
                             features_pv.append(fpv)
                             idx_pv = len(features_pv) - 1
                             
-                            # Cálculo de Offset para BLs
+                            # Cálculo de Offset Transversal para BLs (nos bordos)
                             dist_next = min(dist_percorrida + 0.1, vdata['L'])
                             dist_prev = max(dist_percorrida - 0.1, 0.0)
                             
                             if dist_percorrida + 0.1 <= vdata['L']:
                                 pt_next = vdata['geom'].interpolate(dist_next).asPoint()
-                                dx, dy = pt_next.x() - pt_curr.x(), pt_next.y() - pt_curr.y()
+                                dx, dy = pt_next.x() - pt_bl_base.x(), pt_next.y() - pt_bl_base.y()
                             else:
                                 pt_prev = vdata['geom'].interpolate(dist_prev).asPoint()
-                                dx, dy = pt_curr.x() - pt_prev.x(), pt_curr.y() - pt_prev.y()
+                                dx, dy = pt_bl_base.x() - pt_prev.x(), pt_bl_base.y() - pt_prev.y()
                             
                             length = math.sqrt(dx*dx + dy*dy)
                             current_last_indices = [(features_pv, idx_pv)]
@@ -796,8 +821,8 @@ class Medir3DPlugin:
                                 offset = largura_via / 2.0
                                 
                                 for side in [-1, 1]:
-                                    bl_pos = QgsPointXY(pt_curr.x() + nx * offset * side, 
-                                                        pt_curr.y() + ny * offset * side)
+                                    bl_pos = QgsPointXY(pt_bl_base.x() + nx * offset * side, 
+                                                        pt_bl_base.y() + ny * offset * side)
                                     fbl = QgsFeature()
                                     fbl.setGeometry(QgsGeometry.fromPointXY(bl_pos))
                                     fbl.setAttributes([round(q_cap, 4), round(q_acc, 4), round(i_long, 4), qtd_novas])
