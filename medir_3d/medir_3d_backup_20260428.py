@@ -111,8 +111,6 @@ class Medir3DPlugin:
             self.dockwidget.btn_excluir_historico.clicked.connect(self.excluir_historico)
             self.dockwidget.btn_calc_sarjeta.clicked.connect(self.calcular_bocas_de_lobo)
             self.dockwidget.btn_calc_otimo.clicked.connect(self.calcular_tracado_economico)
-            self.dockwidget.btn_salvar_gpkg.clicked.connect(self.exportar_geopackage)
-            self.dockwidget.btn_carregar_gpkg.clicked.connect(self.importar_geopackage)
             QgsProject.instance().layersAdded.connect(self.atualizar_camadas)
             QgsProject.instance().layersRemoved.connect(self.atualizar_camadas)
             
@@ -279,126 +277,6 @@ class Medir3DPlugin:
 
         except Exception as e:
             self.dockwidget.add_result(f"Erro Crítico ao Salvar: {str(e)}")
-
-    def exportar_geopackage(self):
-        from qgis.PyQt.QtWidgets import QFileDialog
-        from qgis.core import QgsVectorFileWriter, QgsProject, QgsLayerTreeLayer, QgsVectorLayer
-        import os, time
-
-        # 1. Encontrar grupo Medir 3D e suas camadas
-        root = QgsProject.instance().layerTreeRoot()
-        group = root.findGroup("Medir 3D")
-        if not group:
-            self.dockwidget.add_result("Erro: Grupo 'Medir 3D' não encontrado. Mantenha as camadas dentro deste grupo para salvar.")
-            return
-
-        layers_to_save = []
-        for child in group.children():
-            if isinstance(child, QgsLayerTreeLayer):
-                lyr = child.layer()
-                if isinstance(lyr, QgsVectorLayer):
-                    layers_to_save.append(lyr)
-
-        if not layers_to_save:
-            self.dockwidget.add_result("Erro: Nenhuma camada vetorial no grupo 'Medir 3D' para salvar.")
-            return
-
-        # 2. Escolher arquivo
-        file_path, _ = QFileDialog.getSaveFileName(
-            self.dockwidget, "Salvar Projeto Completo (GeoPackage)", "", "GeoPackage (*.gpkg)"
-        )
-        if not file_path: return
-        if not file_path.endswith(".gpkg"): file_path += ".gpkg"
-
-        # 3. Salvar camadas (Gerando nomes únicos para não sobrescrever o histórico)
-        self.dockwidget.add_result(f"\n--- EXPORTANDO PROJETO COMPLETO ---")
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        
-        try:
-            success_count = 0
-            for layer in layers_to_save:
-                # Limpa o nome para ser uma tabela válida
-                clean_name = "".join([c if c.isalnum() else "_" for c in layer.name()])
-                table_name = f"{clean_name}_{timestamp}"
-                
-                options = QgsVectorFileWriter.SaveVectorOptions()
-                options.driverName = "GPKG"
-                options.layerName = table_name
-                
-                # Se arquivo existe, ADICIONA camada (não apaga as antigas)
-                if os.path.exists(file_path):
-                    options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-                else:
-                    options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
-                
-                context = self.iface.mapCanvas().mapSettings().transformContext()
-                res = QgsVectorFileWriter.writeAsVectorFormatV3(layer, file_path, context, options)
-                
-                if res[0] == QgsVectorFileWriter.NoError:
-                    self.dockwidget.add_result(f"  [OK] '{layer.name()}' -> {table_name}")
-                    success_count += 1
-                else:
-                    self.dockwidget.add_result(f"  [ERRO] '{layer.name()}': {res[1]}")
-
-            self.dockwidget.add_result(f"SUCESSO: {success_count} camadas salvas. Histórico preservado no GeoPackage.")
-        except Exception as e:
-            self.dockwidget.add_result(f"Erro Crítico: {str(e)}")
-
-    def importar_geopackage(self):
-        from qgis.PyQt.QtWidgets import QFileDialog, QInputDialog
-        from qgis.core import QgsVectorLayer, QgsProject
-        import os, sqlite3
-
-        file_path, _ = QFileDialog.getOpenFileName(
-            self.dockwidget, "Abrir Projeto de Drenagem", "", "GeoPackage (*.gpkg)"
-        )
-        if not file_path or not os.path.exists(file_path): return
-
-        # Listar todas as tabelas (camadas) disponíveis no GPKG
-        tables = []
-        try:
-            conn = sqlite3.connect(file_path)
-            cursor = conn.cursor()
-            cursor.execute("SELECT table_name FROM gpkg_contents WHERE data_type='features'")
-            tables = [row[0] for row in cursor.fetchall()]
-            conn.close()
-        except: pass
-
-        if not tables:
-            self.dockwidget.add_result("Erro: Nenhuma camada vetorial encontrada no arquivo.")
-            return
-
-        # Perguntar se quer carregar tudo ou apenas um conjunto
-        items = ["Carregar TODAS as camadas (Histórico Completo)", "Carregar apenas as mais recentes"]
-        choice, ok = QInputDialog.getItem(self.dockwidget, "Importar Projeto", "Escolha o modo de importação:", items, 0, False)
-        if not ok: return
-
-        self.dockwidget.add_result(f"\n--- IMPORTANDO DE {os.path.basename(file_path)} ---")
-        
-        # Se for as mais recentes, filtra pelo timestamp final do nome da tabela
-        if "recentes" in choice:
-            # Agrupar por prefixo (nome original) e pegar o maior timestamp
-            latest = {}
-            for t in tables:
-                parts = t.rsplit('_', 2) # Assume Nome_Data_Hora
-                if len(parts) >= 3:
-                    prefix = parts[0]
-                    ts = parts[1] + parts[2]
-                    if prefix not in latest or ts > latest[prefix][0]:
-                        latest[prefix] = (ts, t)
-                else:
-                    latest[t] = ("0", t)
-            tables = [v[1] for v in latest.values()]
-
-        count = 0
-        for table in tables:
-            display_name = table.rsplit('_', 2)[0] if '_' in table else table
-            lyr = QgsVectorLayer(f"{file_path}|layername={table}", display_name, "ogr")
-            if lyr.isValid():
-                self.add_layer_to_group(lyr)
-                count += 1
-        
-        self.dockwidget.add_result(f"SUCESSO: {count} camadas carregadas.")
 
     def limpar_dados(self, permanente=False):
         self.active_projeto_id = None
@@ -1082,22 +960,7 @@ class Medir3DPlugin:
                 self.dockwidget.add_result("Erro: Parâmetros numéricos inválidos na aba de cálculos.")
                 return
 
-            # Campos Dinâmicos (Atributos da Via)
-            campo_n = self.dockwidget.combo_campo_n.currentText()
-            campo_lamina = self.dockwidget.combo_campo_lamina.currentText()
-            campo_caimento = self.dockwidget.combo_campo_caimento.currentText()
-
-            # --- Limpeza de camadas anteriores para evitar duplicidade ---
-            layers_to_del = []
-            for lyr in QgsProject.instance().mapLayers().values():
-                if lyr.name() in ["PVs Otimizados", "Bocas de Lobo Otimizadas", "Rede Sugerida (Otimizada)"]:
-                    layers_to_del.append(lyr.id())
-            if layers_to_del:
-                QgsProject.instance().removeMapLayers(layers_to_del)
-
-            # --- PONTO DE RETORNO (CHECKPOINT DESENVOLVIMENTO) ---
             self.dockwidget.add_result("\n=== INICIANDO OTIMIZAÇÃO AUTOMATIZADA ===")
-            QgsMessageLog.logMessage("Iniciando calcular_tracado_economico...", "Medir 3D", Qgis.Info)
         
             # 2. Preparar Camadas de Saída
             crs = layer_vias.crs().authid()
@@ -1120,10 +983,7 @@ class Medir3DPlugin:
                 QgsField("codlograd", QVariant.String),
                 QgsField("shape_len", QVariant.Double),
                 QgsField("diametro_rede", QVariant.Double),
-                QgsField("cobertura_rede", QVariant.Double),
-                QgsField("n_manning", QVariant.Double),
-                QgsField("lamina_max", QVariant.Double),
-                QgsField("caimento_via", QVariant.Double)
+                QgsField("cobertura_rede", QVariant.Double)
             ]
             
             for pr in [pr_pv, pr_bl, pr_rede]:
@@ -1165,7 +1025,7 @@ class Medir3DPlugin:
             for bacia in selected_bacias:
                 b_geom = bacia.geometry()
                 area_ha = b_geom.area() / 10000.0
-                q_total_bacia = (0.5 * 150 * area_ha) / 360.0 # m3/s (Simulação base)
+                q_total_bacia = (0.5 * 150 * area_ha) / 360.0 # Exemplo simplificado de vazão
                 
                 # Identificar vias na bacia e aplicar clipping + high point split
                 vias_na_bacia = []
@@ -1176,17 +1036,18 @@ class Medir3DPlugin:
                     if vias_selecionadas_ids and v_id not in vias_selecionadas_ids: continue
                     fv = layer_vias.getFeature(v_id)
                     if fv.geometry().intersects(b_geom):
+                        # Clipping
                         inter = fv.geometry().intersection(b_geom)
                         for part in inter.asGeometryCollection() if inter.isMultipart() else [inter]:
                             if QgsWkbTypes.isCurvedType(part.wkbType()): part = part.segmentize()
                             lin = part.asPolyline()
                             if len(lin) < 2: continue
                             
-                            # Topo (Ponto Alto) - Divisão baseada no MDT para garantir gravidade
+                            # Identificar Topo (Ponto Alto)
                             pts_z = [(pt, get_z(pt)) for pt in lin]
                             idx_max = max(range(len(pts_z)), key=lambda i: pts_z[i][1])
                             
-                            def add_vdata(p_list):
+                            def create_via_data(p_list):
                                 if len(p_list) < 2: return
                                 g = QgsGeometry.fromPolylineXY([p[0] for p in p_list])
                                 if g.length() < 1.0: return
@@ -1197,175 +1058,73 @@ class Medir3DPlugin:
                                 nonlocal l_total_vias
                                 l_total_vias += g.length()
 
-                            # Split no ponto alto para garantir fluxo descendente em ambos os sentidos
                             if 0 < idx_max < len(pts_z) - 1:
-                                add_vdata(pts_z[:idx_max+1][::-1]) # Topo -> Início original
-                                add_vdata(pts_z[idx_max:])         # Topo -> Fim original
+                                create_via_data(pts_z[:idx_max+1][::-1])
+                                create_via_data(pts_z[idx_max:])
                             else:
-                                if pts_z[0][1] >= pts_z[-1][1]: add_vdata(pts_z) # Já está correto
-                                else: add_vdata(pts_z[::-1]) # Inverte para gravidade
+                                if pts_z[0][1] >= pts_z[-1][1]: create_via_data(pts_z)
+                                else: create_via_data(pts_z[::-1])
 
-                # ===========================================================================
-                # 5.5. OTIMIZAÇÃO DE TRAÇADO ECONÔMICO — Árvore de Caminhos Mínimos (Dijkstra)
-                # Em vez de colocar rede em TODAS as ruas, encontra a ÁRVORE MÍNIMA que
-                # conecta cada interseção ao exutório (sink) pelo caminho mais curto e
-                # topograficamente favorável. Elimina trechos redundantes e paralelos.
-                # ===========================================================================
-                if not vias_na_bacia: continue
-                
-                TOLERANCIA_NO = 8.0  # metros — distância para agrupar vértices no mesmo nó
-                
-                # --- A. Construir Grafo de Interseções ---
-                raw_nodes = []
-                for vdata in vias_na_bacia:
-                    raw_nodes.append((QgsPointXY(vdata['pts'][0]), vdata['zi']))
-                    raw_nodes.append((QgsPointXY(vdata['pts'][-1]), vdata['zf']))
-                
-                graph_nodes = []  # lista de {'pt': QgsPointXY, 'z': float, 'id': int}
-                
-                def find_or_create_node(pt, z):
-                    for node in graph_nodes:
-                        if node['pt'].distance(pt) <= TOLERANCIA_NO:
-                            if z < node['z']:
-                                node['z'] = z
-                                node['pt'] = pt
-                            return node['id']
-                    nid = len(graph_nodes)
-                    graph_nodes.append({'pt': pt, 'z': z, 'id': nid})
-                    return nid
-                
-                graph_edges = []
-                for idx, vdata in enumerate(vias_na_bacia):
-                    n_from = find_or_create_node(QgsPointXY(vdata['pts'][0]), vdata['zi'])
-                    n_to = find_or_create_node(QgsPointXY(vdata['pts'][-1]), vdata['zf'])
-                    if n_from == n_to:
-                        continue
-                    dz = vdata['zi'] - vdata['zf']
-                    peso = vdata['L']
-                    if dz < 0:
-                        peso += abs(dz) * 50.0
-                    else:
-                        bonus = min(dz * 2.0, vdata['L'] * 0.3)
-                        peso -= bonus
-                    peso = max(1.0, peso)
-                    graph_edges.append({'from': n_from, 'to': n_to, 'weight': peso, 'via_idx': idx})
-                
-                if not graph_nodes or not graph_edges:
-                    continue
-                
-                # --- B. Identificar o Sink (exutório) ---
-                sink_node = min(graph_nodes, key=lambda n: n['z'])
-                sink_id = sink_node['id']
-                self.dockwidget.add_result(
-                    f"  Grafo: {len(graph_nodes)} nós, {len(graph_edges)} arestas. "
-                    f"Sink: nó {sink_id} (Z={sink_node['z']:.1f}m)")
-                
-                # --- C. Dijkstra Reverso do Sink ---
-                adj = {n['id']: [] for n in graph_nodes}
-                for edge in graph_edges:
-                    adj[edge['to']].append((edge['from'], edge['weight'], edge['via_idx']))
-                    adj[edge['from']].append((edge['to'], edge['weight'], edge['via_idx']))
-                
-                INF = float('inf')
-                dist_map = {n['id']: INF for n in graph_nodes}
-                prev_edge = {n['id']: None for n in graph_nodes}
-                dist_map[sink_id] = 0
-                pq = [(0, sink_id)]
-                visited_dij = set()
-                
-                while pq:
-                    d, u = heapq.heappop(pq)
-                    if u in visited_dij:
-                        continue
-                    visited_dij.add(u)
-                    for neighbor, w, via_idx in adj.get(u, []):
-                        if neighbor in visited_dij:
-                            continue
-                        new_dist = d + w
-                        if new_dist < dist_map[neighbor]:
-                            dist_map[neighbor] = new_dist
-                            prev_edge[neighbor] = via_idx
-                            heapq.heappush(pq, (new_dist, neighbor))
-                
-                # --- D. Extrair Árvore Mínima ---
-                tree_via_indices = set()
-                for nid in range(len(graph_nodes)):
-                    if prev_edge[nid] is not None:
-                        tree_via_indices.add(prev_edge[nid])
-                
-                vias_originais_count = len(vias_na_bacia)
-                vias_na_bacia = [v for i, v in enumerate(vias_na_bacia) if i in tree_via_indices]
-                removidos = vias_originais_count - len(vias_na_bacia)
-                self.dockwidget.add_result(
-                    f"  Árvore Mínima: {len(vias_na_bacia)} trechos selecionados, "
-                    f"{removidos} redundantes eliminados.")
-                QgsMessageLog.logMessage(
-                    f"Árvore Econômica: {len(tree_via_indices)} de {vias_originais_count} "
-                    f"segmentos mantidos. Sink Z={sink_node['z']:.1f}m",
-                    "Medir 3D", Qgis.Info)
+                if l_total_vias == 0: continue
+                q_linear = q_total_bacia / l_total_vias
 
-                # Recalcular vazão linear baseada na rede otimizada
-                l_total_vias_filtrada = sum(v['L'] for v in vias_na_bacia)
-                if l_total_vias_filtrada == 0: continue
-                q_linear = q_total_bacia / l_total_vias_filtrada
-
-
-                # Ordenação Topológica por Z (Inicia nas cotas mais altas para acumular vazão)
-                vias_na_bacia.sort(key=lambda x: x['zi'], reverse=True)
-                flow_at_point = {} # Rastreio de (x,y) -> q_acumulado para conexão entre trechos
-
-                # 6. Simulação Hidráulica Refinada
+                # 6. Simulação Hidráulica e Geração de Elementos
+                # Função auxiliar: extrair sub-polilinha da geometria por distância ao longo da linha
                 def extrair_sublinha(geom, pts_originais, d_ini, d_fim):
-                    if d_fim <= d_ini + 0.1: return None
-                    sub_pts = [geom.interpolate(d_ini).asPoint()]
+                    """Extrai um segmento da polilinha entre duas distâncias, usando os vértices originais."""
+                    if d_fim <= d_ini + 0.5: return None
+                    
+                    sub_pts = []
                     d_acc = 0.0
+                    
+                    # Adicionar ponto interpolado no início
+                    pt_ini = geom.interpolate(d_ini).asPoint()
+                    sub_pts.append(pt_ini)
+                    
+                    # Percorrer vértices originais, incluindo os que ficam entre d_ini e d_fim
                     for i in range(len(pts_originais) - 1):
                         seg_len = pts_originais[i].distance(pts_originais[i + 1])
                         d_next = d_acc + seg_len
-                        if d_next > d_ini + 0.1 and d_next < d_fim - 0.1:
+                        
+                        # O vértice i+1 está entre d_ini e d_fim?
+                        if d_next > d_ini + 0.5 and d_next < d_fim - 0.5:
                             sub_pts.append(pts_originais[i + 1])
+                        
                         d_acc = d_next
-                    sub_pts.append(geom.interpolate(d_fim).asPoint())
+                    
+                    # Adicionar ponto interpolado no final
+                    pt_fim = geom.interpolate(d_fim).asPoint()
+                    sub_pts.append(pt_fim)
+                    
+                    # Remover pontos duplicados consecutivos
                     clean_pts = [sub_pts[0]]
                     for p in sub_pts[1:]:
-                        if clean_pts[-1].distance(p) > 0.01: clean_pts.append(p)
-                    return QgsGeometry.fromPolylineXY(clean_pts) if len(clean_pts) >= 2 else None
+                        if clean_pts[-1].distance(p) > 0.01:
+                            clean_pts.append(p)
+                    
+                    if len(clean_pts) < 2: return None
+                    return QgsGeometry.fromPolylineXY(clean_pts)
 
                 for vdata in vias_na_bacia:
-                    fv_orig = vdata['feat']
-                    p_ini_key = (round(vdata['pts'][0].x(), 2), round(vdata['pts'][0].y(), 2))
-                    q_acc = flow_at_point.get(p_ini_key, 0.0) # Recebe vazão de trechos a montante
-
                     # Atributos base da feição original
-                    orig_fields = fv_orig.fields()
+                    orig_fields = vdata['feat'].fields()
                     id_idx = orig_fields.indexOf("id")
                     if id_idx < 0: id_idx = orig_fields.indexOf("ID")
-                    id_val = fv_orig.attribute(id_idx) if id_idx >= 0 else fv_orig.id()
-                    cod_val = fv_orig.attribute(orig_fields.indexOf("codlograd")) if orig_fields.indexOf("codlograd") >= 0 else ""
+                    id_val = vdata['feat'].attribute(id_idx) if id_idx >= 0 else vdata['feat'].id()
+                    cod_val = vdata['feat'].attribute(orig_fields.indexOf("codlograd")) if orig_fields.indexOf("codlograd") >= 0 else ""
 
-                    # Parâmetros Hidráulicos Dinâmicos
-                    def get_attr_val(campo, fixo):
-                        try:
-                            val = fv_orig.attribute(campo)
-                            if val is not None and str(val).lower() != 'nan': return float(str(val).replace(',', '.'))
-                        except: pass
-                        return fixo
-
-                    n_real = get_attr_val(campo_n, n_fixo)
-                    lam_real = get_attr_val(campo_lamina, lam_fixo)
-                    cai_via_real = get_attr_val(campo_caimento, cai_fixo)
-                    
                     i_long = max(0.001, abs(vdata['zi'] - vdata['zf']) / vdata['L'])
-                    q_cap = self.calcular_capacidade_sarjeta(n_real, lam_real, cai_fixo, i_long)
+                    q_cap = self.calcular_capacidade_sarjeta(n_fixo, lam_fixo, cai_fixo, i_long)
                     fator_e = 0.5 if i_long > 0.08 else (0.75 if i_long > 0.04 else 1.0)
                     q_engol_real = q_engol_fixo * fator_e
 
-                    # Simulação de passos para PVs/BLs com Baterias e Trava de Distância
-                    pv_temp_list = [] # (dist_pv, q_acc_no_momento, num_grelhas, dist_bl_base)
+                    # --- Fase A: Simulação hidráulica para identificar posições de PVs ---
+                    pv_dists = []  # Lista de distâncias ao longo do segmento onde PVs serão colocados
+                    q_acc = 0.0
                     dist_percorrida = 0.0
                     dist_desde_ultimo_pv = 0.0
+                    
                     passo = 5.0
-
                     while dist_percorrida < vdata['L']:
                         seg_l = min(passo, vdata['L'] - dist_percorrida)
                         q_acc += q_linear * seg_l
@@ -1373,125 +1132,177 @@ class Medir3DPlugin:
                         dist_desde_ultimo_pv += seg_l
                         
                         is_final = dist_percorrida >= vdata['L'] - 2.0
-                        gatilho_hidr = q_acc > (q_cap * margem_segur)
-                        gatilho_geom = dist_desde_ultimo_pv >= dist_max
-                        gatilho_topol = is_final and q_acc > (q_engol_real * 0.5)
+                        gatilho = (q_acc > (q_cap * margem_segur) or 
+                                   dist_desde_ultimo_pv >= dist_max or 
+                                   (is_final and q_acc > 0.01))
                         
-                        if (gatilho_hidr or gatilho_geom or gatilho_topol) and dist_desde_ultimo_pv >= dist_min:
-                            # Baterias de Grelhas
-                            vazao_excedente = q_acc - (q_cap * margem_segur) if gatilho_hidr else q_acc
-                            qtd_g = math.ceil(vazao_excedente / q_engol_real) if q_engol_real > 0 else 1
-                            
-                            # Shift PV para jusante (Garante declividade na conexão BL->PV)
-                            s_alvo = 0.01
-                            shift = ( (largura_via/2.0)*cai_fixo ) / (i_long - s_alvo) if i_long > s_alvo + 0.002 else 6.0
-                            shift = max(3.0, min(shift, 6.0))
-                            
-                            pv_d = min(dist_percorrida + shift, vdata['L'])
-                            pv_temp_list.append((pv_d, q_acc, qtd_g, dist_percorrida))
-                            q_acc = max(0.0, q_acc - (qtd_g * q_engol_real))
+                        if gatilho and dist_desde_ultimo_pv >= dist_min:
+                            # Cálculo de shift para o PV (a jusante da captação)
+                            shift = max(3.0, min(6.0, (largura_via/2.0 * cai_fixo)/(i_long - 0.01) if i_long > 0.012 else 6.0))
+                            curr_pv_dist = min(dist_percorrida + shift, vdata['L'])
+                            pv_dists.append(curr_pv_dist)
+                            q_acc = 0.0
                             dist_desde_ultimo_pv = 0.0
 
-                    # Garantir PV no final para conectividade
-                    if not pv_temp_list or (vdata['L'] - pv_temp_list[-1][0]) > dist_min:
-                        pv_temp_list.append((vdata['L'], q_acc, 0, vdata['L']))
+                    # Garantir PV no ponto final (baixo/confluência) para conectividade
+                    if not pv_dists or (vdata['L'] - pv_dists[-1]) > dist_min:
+                        pv_dists.append(vdata['L'])
+                    elif pv_dists and abs(pv_dists[-1] - vdata['L']) < dist_min:
+                        # Se o último PV está muito perto do final, move ele para o final exato
+                        pv_dists[-1] = vdata['L']
 
-                    # Gerar Features e Tramos de Rede
-                    last_trace_d = 0.0
-                    # Se primeiro PV está perto do topo, começa nele para evitar stubs
-                    if pv_temp_list and pv_temp_list[0][0] < dist_min * 1.5:
-                        last_trace_d = pv_temp_list[0][0]
+                    # --- Fase B: Validação Pré-Lançamento ---
+                    # B1: Remover PVs redundantes (muito próximos entre si)
+                    pv_dists_valid = []
+                    for d in pv_dists:
+                        if not pv_dists_valid or (d - pv_dists_valid[-1]) >= dist_min:
+                            pv_dists_valid.append(d)
+                        else:
+                            # Substitui o anterior se o atual é o ponto final
+                            if abs(d - vdata['L']) < 1.0:
+                                pv_dists_valid[-1] = d
+                    pv_dists = pv_dists_valid
 
-                    for pv_d, q_v, qtd, bl_d in pv_temp_list:
-                        # 1. Feature PV
-                        pt_pv = vdata['geom'].interpolate(pv_d).asPoint()
-                        fpv = QgsFeature(layer_pv.fields())
-                        fpv.setGeometry(QgsGeometry.fromPointXY(pt_pv))
-                        fpv.setAttributes([id_val, cod_val, 0.0, 400.0, 1.0, n_real, lam_real, round(cai_via_real*100, 2)])
-                        features_pv.append(fpv)
+                    # B2: Verificar que todos os PVs estão dentro do segmento
+                    pv_dists = [d for d in pv_dists if 0 < d <= vdata['L'] + 0.1]
+                    
+                    if not pv_dists:
+                        # Segmento muito curto: um único trecho sem PV intermediário
+                        # Apenas adicionar PV no final e a rede inteira
+                        pv_dists = [vdata['L']]
 
-                        # 2. Feature Rede (Trace entre PVs)
-                        if pv_d > last_trace_d + 0.1:
-                            seg_g = extrair_sublinha(vdata['geom'], vdata['pts'], last_trace_d, pv_d)
-                            if seg_g:
-                                z_i_s, z_f_s = get_z(seg_g.asPolyline()[0]), get_z(seg_g.asPolyline()[-1])
-                                sl = abs(z_i_s - z_f_s) / max(0.1, seg_g.length())
-                                s_p = max(0.005, sl)
-                                cob = 1.0 + max(0, (sl - s_p) * seg_g.length())
-                                fr = QgsFeature(layer_rede.fields())
-                                fr.setGeometry(seg_g)
-                                fr.setAttributes([id_val, cod_val, round(seg_g.length(), 2), 400.0, round(cob, 2), n_real, lam_real, round(cai_via_real*100, 2)])
-                                features_rede.append(fr)
-                        last_trace_d = pv_d
+                    # B3: O primeiro trecho da rede começa no primeiro PV
+                    # (NÃO no topo - elimina segmentos curtos e PVs desnecessários no ponto alto)
+                    primeiro_pv = pv_dists[0]
+                    
+                    # Verificação: se o primeiro PV está muito perto do topo (< dist_min),
+                    # não precisa de rede antes dele. A rede começa nele.
+                    # Se está longe, cria a rede do topo até o primeiro PV para cobertura.
+                    rede_inicio = 0.0
+                    if primeiro_pv < dist_min * 1.5:
+                        # Primeiro PV perto do topo: rede começa no primeiro PV
+                        rede_inicio = primeiro_pv
+                    else:
+                        # Primeiro PV longe do topo: rede começa no topo (dist=0)
+                        rede_inicio = 0.0
+                    
+                    # --- Fase C: Lançamento de Elementos ---
+                    # C1: Lançar PVs
+                    for pv_d in pv_dists:
+                        pt = vdata['geom'].interpolate(pv_d).asPoint()
+                        f = QgsFeature(layer_pv.fields())
+                        f.setGeometry(QgsGeometry.fromPointXY(pt))
+                        f.setAttributes([id_val, cod_val, 0.0, 400.0, 1.0])
+                        features_pv.append(f)
 
-                        # 3. Feature BLs (Pares nos bordos)
-                        if qtd > 0:
-                            pt_bl_b = vdata['geom'].interpolate(bl_d).asPoint()
-                            d_p = min(bl_d + 0.1, vdata['L'])
-                            pt_p = vdata['geom'].interpolate(d_p).asPoint()
-                            dx, dy = pt_p.x() - pt_bl_b.x(), pt_p.y() - pt_bl_b.y()
-                            leng = math.sqrt(dx*dx + dy*dy)
-                            if leng > 0:
-                                nx, ny = -dy/leng, dx/leng
-                                offset = largura_via / 2.0
-                                for side in [-1, 1]:
-                                    fbl = QgsFeature(layer_bl.fields())
-                                    fbl.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(pt_bl_b.x() + nx*offset*side, pt_bl_b.y() + ny*offset*side)))
-                                    fbl.setAttributes([id_val, cod_val, 0.0, 0.0, 0.0, n_real, lam_real, round(cai_via_real*100, 2)])
-                                    features_bl.append(fbl)
-
-                    # Propagar vazão para jusante
-                    p_fim_key = (round(vdata['pts'][-1].x(), 2), round(vdata['pts'][-1].y(), 2))
-                    flow_at_point[p_fim_key] = flow_at_point.get(p_fim_key, 0.0) + q_acc
+                    # C2: Lançar Rede segmentada de PV a PV
+                    pontos_rede = [rede_inicio] + pv_dists
+                    for k in range(len(pontos_rede) - 1):
+                        d1 = pontos_rede[k]
+                        d2 = pontos_rede[k + 1]
+                        seg_g = extrair_sublinha(vdata['geom'], vdata['pts'], d1, d2)
+                        if seg_g is None or seg_g.isEmpty(): continue
+                        
+                        # Cálculo de cobertura refinado
+                        seg_len = seg_g.length()
+                        z_ini = get_z(seg_g.asPolyline()[0])
+                        z_fim = get_z(seg_g.asPolyline()[-1])
+                        slope_local = abs(z_ini - z_fim) / max(0.1, seg_len)
+                        s_pipe = max(0.005, slope_local)
+                        max_c = 1.0 + max(0, (slope_local - s_pipe) * seg_len)
+                        
+                        f = QgsFeature(layer_rede.fields())
+                        f.setGeometry(seg_g)
+                        f.setAttributes([id_val, cod_val, round(seg_len, 2), 400.0, round(max_c, 2)])
+                        features_rede.append(f)
+                    
+                    # C3: Lançar BLs em cada posição de PV (exceto final do segmento)
+                    for pv_d in pv_dists[:-1]:  # Não coloca BL no último PV (confluência)
+                        pt_bl = vdata['geom'].interpolate(pv_d).asPoint()
+                        # Calcular direção perpendicular
+                        d_probe = min(pv_d + 0.5, vdata['L'])
+                        d_back = max(pv_d - 0.5, 0.0)
+                        if d_probe > pv_d:
+                            pt_n = vdata['geom'].interpolate(d_probe).asPoint()
+                            dx, dy = pt_n.x() - pt_bl.x(), pt_n.y() - pt_bl.y()
+                        else:
+                            pt_b = vdata['geom'].interpolate(d_back).asPoint()
+                            dx, dy = pt_bl.x() - pt_b.x(), pt_bl.y() - pt_b.y()
+                        
+                        leng = math.sqrt(dx*dx + dy*dy)
+                        if leng > 0:
+                            nx, ny = -dy/leng, dx/leng
+                            offset = largura_via / 2.0
+                            for side in [-1, 1]:
+                                fbl = QgsFeature(layer_bl.fields())
+                                fbl.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(
+                                    pt_bl.x() + nx * offset * side, 
+                                    pt_bl.y() + ny * offset * side)))
+                                fbl.setAttributes([id_val, cod_val, 0.0, 0.0, 0.0])
+                                features_bl.append(fbl)
 
             # --- 7. Validação Final e Relatório ---
-            self.dockwidget.add_result(f"\n--- RESUMO DA OTIMIZAÇÃO REFINADA ---")
+            self.dockwidget.add_result(f"\n--- VALIDAÇÃO PRÉ-LANÇAMENTO ---")
             
-            # Remover PVs duplicados por proximidade extrema
-            def clean_duplicates(feats):
-                seen = []
-                unique = []
-                for f in feats:
-                    p = f.geometry().asPoint()
-                    if not any(p.distance(s) < 0.8 for s in seen):
-                        seen.append(p); unique.append(f)
-                return unique
+            # V1: Verificar segmentos de rede muito curtos
+            segs_curtos = 0
+            features_rede_valid = []
+            for f in features_rede:
+                if f.geometry().length() < 1.0:
+                    segs_curtos += 1
+                else:
+                    features_rede_valid.append(f)
+            features_rede = features_rede_valid
+            if segs_curtos > 0:
+                self.dockwidget.add_result(f"  Removidos {segs_curtos} segmento(s) de rede < 1m (stubs)")
+            
+            # V2: Verificar PVs duplicados (muito próximos)
+            pvs_removidos = 0
+            features_pv_valid = []
+            for f in features_pv:
+                pt = f.geometry().asPoint()
+                duplicado = False
+                for fv in features_pv_valid:
+                    pt_v = fv.geometry().asPoint()
+                    if pt.distance(pt_v) < 1.0:
+                        duplicado = True
+                        pvs_removidos += 1
+                        break
+                if not duplicado:
+                    features_pv_valid.append(f)
+            features_pv = features_pv_valid
+            if pvs_removidos > 0:
+                self.dockwidget.add_result(f"  Removidos {pvs_removidos} PV(s) duplicado(s) (< 1m de distância)")
+            
+            self.dockwidget.add_result(f"  Elementos válidos: {len(features_pv)} PVs, {len(features_bl)} BLs, {len(features_rede)} Redes")
 
-            features_pv = clean_duplicates(features_pv)
-            
+            # 8. Adicionar camadas ao projeto
             if features_pv or features_rede:
                 pr_pv.addFeatures(features_pv)
                 pr_bl.addFeatures(features_bl)
                 pr_rede.addFeatures(features_rede)
                 
-                # Estilos Premium
+                # Estilização
                 from qgis.core import QgsLineSymbol, QgsMarkerSymbol, QgsSingleSymbolRenderer
-                layer_rede.setRenderer(QgsSingleSymbolRenderer(QgsLineSymbol.createSimple({'line_color': '0,200,0,255', 'line_width': '1.2'})))
-                layer_pv.setRenderer(QgsSingleSymbolRenderer(QgsMarkerSymbol.createSimple({'name': 'circle', 'color': '80,80,80,255', 'size': '3.2'})))
-                layer_bl.setRenderer(QgsSingleSymbolRenderer(QgsMarkerSymbol.createSimple({'name': 'square', 'color': '180,20,20,255', 'size': '2.2'})))
+                
+                sym_rede = QgsLineSymbol.createSimple({'line_color': '0,255,0,255', 'line_width': '1.2'})
+                layer_rede.setRenderer(QgsSingleSymbolRenderer(sym_rede))
+                
+                sym_pv = QgsMarkerSymbol.createSimple({'name': 'circle', 'color': '100,100,100,255', 'size': '3'})
+                layer_pv.setRenderer(QgsSingleSymbolRenderer(sym_pv))
+                
+                sym_bl = QgsMarkerSymbol.createSimple({'name': 'square', 'color': '200,50,50,255', 'size': '2'})
+                layer_bl.setRenderer(QgsSingleSymbolRenderer(sym_bl))
 
                 self.add_layer_to_group(layer_rede, at_bottom=True)
                 self.add_layer_to_group(layer_bl)
                 self.add_layer_to_group(layer_pv)
                 
-                self.dockwidget.add_result(f"SUCESSO!\n- {len(features_pv)} PVs\n- {len(features_bl)} BLs\n- {len(features_rede)} Tramos de Rede\nFluxo contínuo propagado entre logradouros via MDT.")
-            else:
-                self.dockwidget.add_result("Aviso: Nenhum elemento gerado nas condições atuais.")
-
-            # 8. Mensagem Final
-            if features_pv or features_rede:
-                self.dockwidget.add_result(f"\nPROCESSO CONCLUÍDO: Camadas carregadas no grupo 'Medir 3D'.")
+                self.dockwidget.add_result(f"\nSUCESSO: Otimização concluída!\n- {len(features_pv)} PVs\n- {len(features_bl)} BLs\n- {len(features_rede)} Tramas de Rede")
             else:
                 self.dockwidget.add_result("Aviso: Nenhum elemento gerado. Verifique as bacias e seleções.")
 
         except Exception as e:
-            # --- PONTO DE RETORNO EM CASO DE FALHA ---
-            msg_erro = f"FALHA CRÍTICA NA OTIMIZAÇÃO: {str(e)}"
-            self.dockwidget.add_result(f"\n[!] {msg_erro}")
-            self.dockwidget.add_result("Consulte o Log de Mensagens do QGIS para detalhes técnicos.")
-            
+            self.dockwidget.add_result(f"Erro Crítico na Otimização: {str(e)}")
             import traceback
-            error_details = traceback.format_exc()
-            QgsMessageLog.logMessage(f"DETALHES DA FALHA (Traçado Econômico):\n{error_details}", "Medir 3D", Qgis.Critical)
-            
-            # Resetar estado se necessário (as camadas memory não precisam de rollback manual se não foram adicionadas)
+            QgsMessageLog.logMessage(traceback.format_exc(), "Medir 3D", Qgis.Critical)

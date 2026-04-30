@@ -157,6 +157,17 @@ class Medir3DDockWidget(QDockWidget):
         self.btn_calc_otimo.setStyleSheet("background-color: #e1f5fe; font-weight: bold;")
         self.tab_otimiza_layout.addWidget(self.btn_calc_otimo)
         
+        # Salvamento e Recuperação GPKG
+        self.tab_otimiza_layout.addWidget(QLabel("Gerenciar Projetos (GeoPackage):"))
+        gpkg_layout = QHBoxLayout()
+        self.btn_salvar_gpkg = QPushButton("Exportar/Salvar GPKG")
+        self.btn_salvar_gpkg.setStyleSheet("background-color: #f1f8e9; font-weight: bold;")
+        self.btn_carregar_gpkg = QPushButton("Importar/Abrir GPKG")
+        self.btn_carregar_gpkg.setStyleSheet("background-color: #fff9c4; font-weight: bold;")
+        gpkg_layout.addWidget(self.btn_salvar_gpkg)
+        gpkg_layout.addWidget(self.btn_carregar_gpkg)
+        self.tab_otimiza_layout.addLayout(gpkg_layout)
+        
         self.tab_otimiza_layout.addStretch()
         self.tabs.addTab(self.tab_otimiza, "Otimização")
         
